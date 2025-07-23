@@ -1,0 +1,210 @@
+{% extends "ana.html" %}
+{% load static %}
+
+{% block baslik %}Kullanıcı Paneli - PetSafe Hub{% endblock %}
+
+{% block css_dosyalar %}
+<style>
+/* 🧩 Kart yapısı */
+.hayvan-kart {
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.04);
+    transition: 0.3s;
+}
+.hayvan-kart:hover {
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+}
+
+/* 🖼 Görsel sabit oranda ve taşmayan */
+.hayvan-resim {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    object-position: center;
+    border-bottom: 1px solid #ddd;
+}
+
+/* 🔖 Durum etiketi */
+.durum-etiket {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    border-radius: 15px;
+}
+
+/* 📊 Bilgi satırları */
+.bilgi-satir {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.95rem;
+    padding: 4px 0;
+    border-bottom: 1px dotted #eee;
+}
+.bilgi-etiket {
+    color: #6c757d;
+    font-weight: 500;
+}
+.bilgi-deger {
+    font-weight: 600;
+    color: #212529;
+}
+
+/* 🔘 Butonlar */
+.eylem-dugmeleri .btn {
+    font-size: 0.85rem;
+    padding: 6px 10px;
+}
+.eylem-dugmeleri {
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* 📱 Mobil uyum */
+@media (max-width: 768px) {
+    .hayvan-resim {
+        aspect-ratio: 1 / 1;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="container my-5" data-aos="fade-up">
+    <div class="row mb-5 align-items-center">
+        <div class="col-md-8">
+            <h2 class="panel-baslik mb-2">
+                <i class="fas fa-paw me-2" style="color: var(--secondary-color);"></i> Evcil Dostlarım
+            </h2>
+            <p class="text-muted">Kayıtlı evcil hayvanlarınızı yönetin, detayları görüntüleyin.</p>
+        </div>
+        <div class="col-md-4 text-md-end text-center mt-3 mt-md-0">
+            <a href="{% url 'add_pet' %}" class="btn btn-success">
+                <i class="fas fa-plus me-2"></i> Yeni Evcil Hayvan Ekle
+            </a>
+        </div>
+    </div>
+
+    <!-- 🔍 Arama -->
+    <div class="mb-4">
+        <div class="arama-kutusu input-group">
+            <span class="input-group-text"><i class="fas fa-search text-muted"></i></span>
+            <input type="text" id="petSearch" class="form-control" placeholder="Hayvan adı, cinsi veya türü ara...">
+        </div>
+    </div>
+
+    {% if evcil_hayvanlar.object_list %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="petList">
+        {% for hayvan in evcil_hayvanlar.object_list %}
+        <div class="col">
+            <div class="hayvan-kart card position-relative">
+
+                <!-- 🖼 Görsel -->
+                {% if hayvan.resim %}
+                    <img src="{{ hayvan.resim.url }}" class="hayvan-resim" alt="{{ hayvan.ad }}">
+                {% else %}
+                    {% if hayvan.tur == 'kopek' %}
+                        <img src="{% static 'img/icons/dog-icon.jpg' %}" class="hayvan-resim" alt="Köpek">
+                    {% elif hayvan.tur == 'kedi' %}
+                        <img src="{% static 'img/icons/cat-icon.jpg' %}" class="hayvan-resim" alt="Kedi">
+                    {% else %}
+                        <img src="{% static 'img/icons/other-pet.jpg' %}" class="hayvan-resim" alt="Evcil Hayvan">
+                    {% endif %}
+                {% endif %}
+
+                <!-- 🚨 Etiket -->
+                <span class="durum-etiket badge {% if hayvan.kayip_durumu %}bg-danger{% else %}bg-success{% endif %}">
+                    {% if hayvan.kayip_durumu %}Kayıp{% else %}Güvende{% endif %}
+                </span>
+
+                <!-- 📋 Bilgiler -->
+                <div class="card-body p-4">
+                    <h5 class="card-title fw-bold mb-2">{{ hayvan.ad }}</h5>
+                    <div class="bilgi-satir">
+                        <span class="bilgi-etiket">Tür:</span>
+                        <span class="bilgi-deger">{{ hayvan.get_tur_display }}</span>
+                    </div>
+                    <div class="bilgi-satir">
+                        <span class="bilgi-etiket">Cinsiyet:</span>
+                        <span class="bilgi-deger">{{ hayvan.get_cinsiyet_display }}</span>
+                    </div>
+                    {% if hayvan.dogum_tarihi %}
+                    <div class="bilgi-satir">
+                        <span class="bilgi-etiket">Doğum:</span>
+                        <span class="bilgi-deger">{{ hayvan.dogum_tarihi|date:"d M Y" }}</span>
+                    </div>
+                    {% endif %}
+
+                    <!-- 🔘 İşlem Butonları -->
+                    <div class="eylem-dugmeleri d-flex mt-4">
+                        <a href="{% url 'pet_detail' hayvan.id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-info-circle me-1"></i> Detaylar
+                        </a>
+                        <a href="{% url 'edit_pet' hayvan.id %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-edit me-1"></i> Düzenle
+                        </a>
+                        <a href="{% url 'delete_pet' hayvan.id %}" class="btn btn-outline-danger"
+                           onclick="return confirm('Bu evcil hayvanı silmek istediğinize emin misiniz?');">
+                            <i class="fas fa-trash me-1"></i> Sil
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 📄 Sayfalama -->
+    {% if evcil_hayvanlar.has_other_pages %}
+    <nav class="mt-5">
+        <ul class="pagination justify-content-center">
+            {% if evcil_hayvanlar.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ evcil_hayvanlar.previous_page_number }}">«</a></li>
+            {% endif %}
+            {% for i in evcil_hayvanlar.paginator.page_range %}
+            <li class="page-item {% if evcil_hayvanlar.number == i %}active{% endif %}">
+                <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+            </li>
+            {% endfor %}
+            {% if evcil_hayvanlar.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ evcil_hayvanlar.next_page_number }}">»</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    {% else %}
+    <!-- 🚫 Hiç veri yoksa -->
+    <div class="bos-panel text-center mt-5">
+        <i class="fas fa-paw fa-3x text-muted mb-3"></i>
+        <h4 class="fw-bold">Henüz Evcil Hayvanınız Yok</h4>
+        <p class="text-muted">Hemen bir evcil dost ekleyerek başlayın!</p>
+        <a href="{% url 'add_pet' %}" class="btn btn-primary mt-3">
+            <i class="fas fa-plus me-2"></i> Evcil Hayvan Ekle
+        </a>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block js_dosyalar %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const input = document.getElementById('petSearch');
+    const cards = document.querySelectorAll('#petList .col');
+
+    input.addEventListener('input', function () {
+        const search = this.value.toLowerCase();
+        cards.forEach(card => {
+            const text = card.textContent.toLowerCase();
+            card.style.display = text.includes(search) ? '' : 'none';
+        });
+    });
+});
+</script>
+{% endblock %}

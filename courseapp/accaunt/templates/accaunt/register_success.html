@@ -1,0 +1,87 @@
+<!-- accaunt/templates/accaunt/register_success.html -->
+{% extends 'ana.html' %}
+{% load static %}
+
+{% block baslik %}
+<title>PatiQuard - Kayıt Başarılı</title>
+{% endblock baslik %}
+
+{% block css_dosyalar %}
+<style>
+    .success-container {
+        background: #ffffff;
+        border-radius: 15px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        margin-top: 2rem;
+        margin-bottom: 4rem;
+        max-width: 600px;
+        width: 100%;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    .success-header h4 {
+        color: #1a252f;
+        font-weight: bold;
+        font-size: 1.8rem;
+    }
+    .success-header p {
+        color: #6c757d;
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .btn-login {
+        background-color: #f39c12;
+        color: #fff;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        font-weight: bold;
+        transition: background-color 0.3s ease, transform 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+    }
+    .btn-login:hover {
+        background-color: #e08e0b;
+        transform: scale(1.05);
+    }
+    .btn-login i {
+        margin-right: 0.5rem;
+    }
+    .success-icon {
+        color: #18bc9c;
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    @media (max-width: 576px) {
+        .success-container {
+            padding: 1.5rem;
+            margin: 1rem;
+        }
+        .success-header h4 {
+            font-size: 1.5rem;
+        }
+        .success-header p {
+            font-size: 0.9rem;
+        }
+        .btn-login {
+            padding: 0.6rem 1.5rem;
+        }
+    }
+</style>
+{% endblock css_dosyalar %}
+
+{% block content %}
+<div class="container d-flex justify-content-center">
+    <div class="success-container" data-aos="fade-up" data-aos-duration="800">
+        <div class="success-header">
+            <i class="fas fa-check-circle success-icon"></i>
+            <h4>🎉 Kayıt Başarıyla Tamamlandı!</h4>
+            <p>Etiket, evcil hayvan ve kullanıcı bilgileri başarıyla kaydedildi.</p>
+            <a href="{% url 'user_login' %}" class="btn-login">
+                <i class="fas fa-sign-in-alt"></i> Giriş Yap
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock content %}

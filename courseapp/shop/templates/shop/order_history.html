@@ -1,0 +1,14 @@
+<!-- shop/templates/shop/order_history.html (İçerik Türkçe) -->
+{% extends 'ana.html' %}
+{% block content %}
+<div class="container my-5">
+    <h2>Sipariş Geçmişi</h2>
+    <div class="row">
+        {% for siparis in siparisler %}
+        <div class="col-md-12">
+            <p>Sipariş ID: {{ siparis.id }} - Toplam: {{ siparis.toplam_fiyat }} TL - Durum: {{ siparis.get_durum_display }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+<!-- shop/templates/shop/product_detail.html (Birden fazla resim için carousel, Türkçe) -->
+{% extends 'ana.html' %}
+{% block content %}
+<div class="container my-5">
+    <h2>{{ urun.ad }}</h2>
+    {% if resimler.exists %}
+    <div id="urunCarousel" class="carousel slide">
+        <div class="carousel-inner">
+            {% for resim in resimler %}
+            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                <img src="{{ resim.resim.url }}" class="d-block w-100" alt="{{ urun.ad }}">
+            </div>
+            {% endfor %}
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#urunCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Önceki</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#urunCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Sonraki</span>
+        </button>
+    </div>
+    {% else %}
+    <p>Resim yok.</p>
+    {% endif %}
+    <p>{{ urun.aciklama }}</p>
+    <p>Fiyat: {{ urun.fiyat }} TL</p>
+    <a href="{% url 'add_to_cart' urun.pk %}" class="btn btn-primary">Sepete Ekle</a>
+</div>
+{% endblock %}

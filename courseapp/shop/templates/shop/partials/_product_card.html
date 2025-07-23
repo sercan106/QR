@@ -1,0 +1,79 @@
+{% extends 'ana.html' %}
+{% load static %}
+
+{% block css_dosyalar %}
+<style>
+    /* Ürün Detay Stilleri */
+    .product-detail-container {
+        max-width: 1200px;  /* Ekranı tam kaplamasını önle, maksimum genişlik ver */
+        margin: 0 auto;     /* Ortala */
+        padding: 2rem 1rem; /* Padding ekle, mobil için responsive */
+    }
+    .carousel-inner img {
+        height: 400px;      /* Resim yüksekliğini sabitle */
+        object-fit: contain; /* Resmi bozmadan sığdır */
+    }
+    @media (max-width: 768px) {
+        .carousel-inner img {
+            height: 300px;  /* Mobil için küçült */
+        }
+    }
+    /* Hover efekti opsiyonel */
+    .carousel-item img:hover {
+        transform: scale(1.05);
+        transition: transform 0.3s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="product-detail-container">
+    <h2 class="text-center mb-4 fw-bold text-primary" data-aos="fade-down">{{ urun.ad }}</h2>
+
+    <!-- Carousel için Resimler -->
+    {% if urun.resimler.exists %}
+    <div id="productCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+        <!-- Indicators (Küçük noktalar) -->
+        <div class="carousel-indicators">
+            {% for resim in urun.resimler %}
+            <button type="button" data-bs-target="#productCarousel" data-bs-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" aria-current="true"{% endif %} aria-label="Slide {{ forloop.counter }}"></button>
+            {% endfor %}
+        </div>
+
+        <!-- Carousel İçeriği -->
+        <div class="carousel-inner rounded shadow-lg">
+            {% for resim in urun.resimler %}
+            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                <img src="{{ resim.resim.url }}" class="d-block w-100" alt="{{ urun.ad }} - Resim {{ forloop.counter }}" loading="lazy">
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Kontroller (Sol/Sağ Oklar) -->
+        <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Önceki</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Sonraki</span>
+        </button>
+    </div>
+    {% else %}
+    <!-- Varsayılan Resim -->
+    <img src="{% static 'images/default-product.jpg' %}" class="img-fluid rounded shadow-lg mb-4" alt="{{ urun.ad }}" style="max-height: 400px; width: 100%; object-fit: contain;">
+    {% endif %}
+
+    <!-- Ürün Detayları -->
+    <div class="card border-0 shadow-lg p-4">
+        <h5 class="fw-bold text-dark mb-3">Açıklama:</h5>
+        <p class="text-muted">{{ urun.aciklama }}</p>
+        <small class="text-secondary d-block mb-3">Kategori: {{ urun.kategori.ad }}</small>
+        {% if urun.stok < 5 and urun.stok > 0 %}
+        <span class="badge bg-warning mb-2">Son {{ urun.stok }} adet</span>
+        {% endif %}
+        <p class="fw-bold text-primary mb-3">{{ urun.fiyat }} TL</p>
+        <a href="{% url 'add_to_cart' urun.pk %}" class="btn btn-primary rounded-pill">Sepete Ekle</a>
+    </div>
+</div>
+{% endblock %}

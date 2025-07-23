@@ -1,0 +1,270 @@
+{% extends "ana.html" %}
+{% load static %}
+
+{% block baslik %}{{ hayvan.ad }} - Genel Bakış{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+
+    <!-- Başlık -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <h2 class="fw-bold text-primary mb-0">🐾 {{ hayvan.ad }}</h2>
+        <a href="#" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-edit me-1"></i> Panelde Düzenle
+        </a>
+    </div>
+
+    <!-- Profil Kartı -->
+    <div class="card mb-4 shadow-sm">
+        <div class="row g-0">
+            <div class="col-md-4">
+                {% if hayvan.resim %}
+                    <img src="{{ hayvan.resim.url }}" class="img-fluid rounded-start w-100 h-100 object-fit-cover" alt="{{ hayvan.ad }}">
+                {% else %}
+                    {% with hayvan.tur as tur %}
+                        {% if tur == 'kopek' %}
+                            <img src="{% static 'img/icons/dog-icon.jpg' %}" class="img-fluid rounded-start w-100 h-100 object-fit-cover" alt="Köpek">
+                        {% elif tur == 'kedi' %}
+                            <img src="{% static 'img/icons/cat-icon.jpg' %}" class="img-fluid rounded-start w-100 h-100 object-fit-cover" alt="Kedi">
+                        {% else %}
+                            <img src="{% static 'img/icons/other-pet.jpg' %}" class="img-fluid rounded-start w-100 h-100 object-fit-cover" alt="Evcil Hayvan">
+                        {% endif %}
+                    {% endwith %}
+                {% endif %}
+            </div>
+            <div class="col-md-8">
+                <div class="card-body">
+                    <h5 class="card-title">{{ hayvan.ad }} ({{ hayvan.get_tur_display }})</h5>
+                    <p><strong>Cins:</strong> {{ hayvan.cins }}</p>
+                    <p><strong>Cinsiyet:</strong> {{ hayvan.get_cinsiyet_display }}</p>
+                    {% if hayvan.dogum_tarihi %}
+                        <p><strong>Doğum:</strong> {{ hayvan.dogum_tarihi|date:"d F Y" }}</p>
+                    {% endif %}
+                    {% if hayvan.kayip_durumu %}
+                        <p class="text-danger"><strong>Durum:</strong> Kayıp 🆘</p>
+                        <p class="mb-0"><strong>Bildirim:</strong> {{ hayvan.kayip_bildirim_tarihi|date:"d.m.Y H:i" }}</p>
+                    {% else %}
+                        <p class="text-success"><strong>Durum:</strong> Güvende ✅</p>
+                    {% endif %}
+                    {% if hayvan.odul_miktari %}
+                        <p><strong>Ödül:</strong> {{ hayvan.odul_miktari }} ₺</p>
+                    {% endif %}
+                    {% if hayvan.etiket %}
+                        <p><strong>Etiket No:</strong> {{ hayvan.etiket.seri_numarasi }}</p>
+                        <p><strong>QR:</strong> <a href="{{ hayvan.etiket.qr_kod_url }}" class="link-primary" target="_blank">Görüntüle</a></p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notlar -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-sticky-note me-2"></i>Genel Notlar</span>
+            <a href="#" class="btn btn-sm btn-outline-primary">Düzenle</a>
+        </div>
+        <div class="card-body">
+            <p><strong>Genel:</strong> {{ hayvan.genel_not|default:"-" }}</p>
+            <p><strong>Beslenme:</strong> {{ hayvan.beslenme_notu|default:"-" }}</p>
+            <p><strong>Davranış:</strong> {{ hayvan.davranis_notu|default:"-" }}</p>
+            <p><strong>Sağlık:</strong> {{ hayvan.saglik_notu|default:"-" }}</p>
+        </div>
+    </div>
+
+    <!-- Sahip Bilgisi -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-user me-2"></i>Sahip Bilgisi</span>
+            <a href="#" class="btn btn-sm btn-outline-primary">Düzenle</a>
+        </div>
+        <div class="card-body">
+            <p><strong>Ad Soyad:</strong> {{ hayvan.sahip.ad }} {{ hayvan.sahip.soyad }}</p>
+            <p><strong>Telefon:</strong> {{ hayvan.sahip.telefon }}</p>
+            <p><strong>Yedek Tel:</strong> {{ hayvan.sahip.yedek_telefon|default:"-" }}</p>
+            <p><strong>Acil Durum:</strong> {{ hayvan.sahip.acil_durum_kontagi|default:"-" }}</p>
+            <p><strong>Adres:</strong> {{ hayvan.sahip.adres|default:"-" }}</p>
+        </div>
+    </div>
+
+    <!-- Kilo Geçmişi -->
+    {% if hayvan.kilo_kayitlari.exists %}
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title"><i class="fas fa-chart-line me-2"></i>Kilo Geçmişi</h5>
+            <canvas id="kiloChart" height="150"></canvas>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Accordion Başlangıç -->
+    <div class="accordion mb-5" id="accordionData">
+
+        <!-- Alerjiler -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="alerjiHeader">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#alerjiCollapse">
+                    🧪 Alerjiler
+                </button>
+            </h2>
+            <div id="alerjiCollapse" class="accordion-collapse collapse" aria-labelledby="alerjiHeader">
+                <div class="accordion-body">
+                    {% if hayvan.alerjiler.exists %}
+                        <ul class="list-group">
+                            {% for a in hayvan.alerjiler.all %}
+                                <li class="list-group-item">
+                                    <strong>{{ a.alerji_turu }}</strong><br>
+                                    {{ a.aciklama|default:"-" }}<br>
+                                    <small class="text-muted">{{ a.kaydedilme_tarihi|date:"d.m.Y" }}</small>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">Kayıt bulunamadı.</p>
+                    {% endif %}
+                    <a href="#" class="btn btn-sm btn-outline-primary mt-2">Panelde Yönet</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aşı Takvimi -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="asiHeader">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#asiCollapse">
+                    💉 Aşı Takvimi
+                </button>
+            </h2>
+            <div id="asiCollapse" class="accordion-collapse collapse" aria-labelledby="asiHeader">
+                <div class="accordion-body">
+                    {% if hayvan.asi_takvimi.exists %}
+                        <ul class="list-group">
+                            {% for asi in hayvan.asi_takvimi.all %}
+                                <li class="list-group-item">
+                                    <strong>{{ asi.asi_turu }}</strong> — Plan: {{ asi.planlanan_tarih|date:"d.m.Y" }}
+                                    {% if asi.tamamlandi %}
+                                        <span class="badge bg-success ms-2">Tamamlandı</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark ms-2">Bekliyor</span>
+                                    {% endif %}
+                                    <br><small>{{ asi.notlar|default:"-" }}</small>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">Takvim kaydı yok.</p>
+                    {% endif %}
+                    <a href="#" class="btn btn-sm btn-outline-primary mt-2">Panelde Yönet</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- İlaçlar -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="ilacHeader">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#ilacCollapse">
+                    💊 İlaç Kayıtları
+                </button>
+            </h2>
+            <div id="ilacCollapse" class="accordion-collapse collapse" aria-labelledby="ilacHeader">
+                <div class="accordion-body">
+                    {% if hayvan.ilac_kayitlari.exists %}
+                        <ul class="list-group">
+                            {% for ilac in hayvan.ilac_kayitlari.all %}
+                                <li class="list-group-item">
+                                    <strong>{{ ilac.ilac_adi }}</strong> ({{ ilac.baslangic_tarihi }} - {{ ilac.bitis_tarihi|default:"?" }})<br>
+                                    Dozaj: {{ ilac.dozaj|default:"-" }}<br>
+                                    <small>{{ ilac.notlar|default:"-" }}</small>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">Kayıt bulunamadı.</p>
+                    {% endif %}
+                    <a href="#" class="btn btn-sm btn-outline-primary mt-2">Panelde Yönet</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ameliyatlar -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="ameliyatHeader">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#ameliyatCollapse">
+                    🏥 Ameliyat Geçmişi
+                </button>
+            </h2>
+            <div id="ameliyatCollapse" class="accordion-collapse collapse" aria-labelledby="ameliyatHeader">
+                <div class="accordion-body">
+                    {% if hayvan.ameliyat_kayitlari.exists %}
+                        <ul class="list-group">
+                            {% for ameliyat in hayvan.ameliyat_kayitlari.all %}
+                                <li class="list-group-item">
+                                    <strong>{{ ameliyat.ameliyat_turu }}</strong> – {{ ameliyat.tarih }}<br>
+                                    Veteriner: {{ ameliyat.veteriner|default:"-" }}<br>
+                                    <small>{{ ameliyat.notlar|default:"-" }}</small>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">Kayıt bulunamadı.</p>
+                    {% endif %}
+                    <a href="#" class="btn btn-sm btn-outline-primary mt-2">Panelde Yönet</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Beslenme -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="beslenmeHeader">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#beslenmeCollapse">
+                    🥣 Beslenme Kayıtları
+                </button>
+            </h2>
+            <div id="beslenmeCollapse" class="accordion-collapse collapse" aria-labelledby="beslenmeHeader">
+                <div class="accordion-body">
+                    {% if hayvan.beslenme_kayitlari.exists %}
+                        <ul class="list-group">
+                            {% for b in hayvan.beslenme_kayitlari.all %}
+                                <li class="list-group-item">
+                                    <strong>{{ b.besin_turu }}</strong> — {{ b.tarih }}<br>
+                                    Miktar: {{ b.miktar }}<br>
+                                    <small>{{ b.notlar|default:"-" }}</small>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">Beslenme kaydı yok.</p>
+                    {% endif %}
+                    <a href="#" class="btn btn-sm btn-outline-primary mt-2">Panelde Yönet</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Chart.js -->
+{% if hayvan.kilo_kayitlari.exists %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('kiloChart');
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [{% for k in hayvan.kilo_kayitlari.all|dictsort:"tarih" %}'{{ k.tarih|date:"d M" }}',{% endfor %}],
+            datasets: [{
+                label: 'Kilo (kg)',
+                data: [{% for k in hayvan.kilo_kayitlari.all|dictsort:"tarih" %}{{ k.kilo }},{% endfor %}],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.3,
+                fill: true,
+            }]
+        },
+        options: {
+            scales: { y: { beginAtZero: false } },
+            responsive: true
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

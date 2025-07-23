@@ -1,0 +1,147 @@
+{% extends "ana.html" %}
+{% load static %}
+
+{% block baslik %}{{ hayvan.ad }} - Detaylar{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+
+    <!-- 🐶 Evcil Bilgi Kartı -->
+    <div class="card mb-4 shadow">
+        <div class="row g-0">
+            <div class="col-md-4">
+                {% if hayvan.resim %}
+                    <img src="{{ hayvan.resim.url }}" class="img-fluid rounded-start" alt="{{ hayvan.ad }}">
+                {% else %}
+                    <img src="{% static 'img/default_pet.jpg' %}" class="img-fluid rounded-start" alt="Resim yok">
+                {% endif %}
+            </div>
+            <div class="col-md-8">
+                <div class="card-body">
+                    <h3 class="card-title">{{ hayvan.ad }}</h3>
+                    <p><strong>Tür:</strong> {{ hayvan.get_tur_display }}</p>
+                    <p><strong>Cinsiyet:</strong> {{ hayvan.get_cinsiyet_display }}</p>
+                    {% if hayvan.dogum_tarihi %}
+                        <p><strong>Doğum:</strong> {{ hayvan.dogum_tarihi|date:"d F Y" }}</p>
+                    {% endif %}
+                    {% if hayvan.kayip_durumu %}
+                        <p class="text-danger"><strong>Kayıp!</strong> Bildirim: {{ hayvan.kayip_bildirim_tarihi|date:"d M Y H:i" }}</p>
+                    {% else %}
+                        <p class="text-success"><strong>Durum:</strong> Güvende</p>
+                    {% endif %}
+                    {% if hayvan.odul_miktari %}
+                        <p><strong>Ödül:</strong> {{ hayvan.odul_miktari }} ₺</p>
+                    {% endif %}
+                    {% if hayvan.etiket %}
+                        <p><strong>Etiket No:</strong> {{ hayvan.etiket.seri_numarasi }}</p>
+                        <p><strong>QR:</strong> <a href="{{ hayvan.etiket.qr_kod_url }}" target="_blank">Görüntüle</a></p>
+                    {% endif %}
+
+                    <!-- Butonlar -->
+                    <div class="mt-3 d-flex flex-wrap gap-2">
+                        <a href="{% url 'edit_pet' hayvan.id %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-edit me-1"></i> Profili Düzenle
+                        </a>
+                        <a href="{% url 'hayvan_pdf_indir' hayvan.id %}" class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-file-pdf me-1"></i> PDF Oluştur
+                        </a>
+                        <a href="{% url 'kayip_bildir' hayvan.id %}" class="btn btn-outline-danger btn-sm">
+                            <i class="fas fa-bullhorn me-1"></i> Kayıp Bildir
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📁 Accordion Grup Başlangıç -->
+    <div class="accordion" id="kayitAccordion">
+        {% for baslik, kayitlar, ekle_url, ikon in kayit_gruplari %}
+        <div class="accordion-item mb-2">
+            <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}">
+                    {{ ikon }} {{ baslik }}
+                </button>
+            </h2>
+            <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse" data-bs-parent="#kayitAccordion">
+                <div class="accordion-body">
+                    {% if kayitlar %}
+                        <ul class="list-group list-group-flush">
+                            {% for kayit in kayitlar %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    {{ kayit }}
+                                </div>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="#" class="btn btn-outline-primary" title="Düzenle">🛠️</a>
+                                    <a href="#" class="btn btn-outline-danger" title="Sil">🗑️</a>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">Kayıt bulunamadı.</p>
+                    {% endif %}
+                    <a href="{% url ekle_url hayvan.id %}" class="btn btn-sm btn-outline-primary mt-2">➕ Yeni Ekle</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 🧾 Notlar -->
+    {% if hayvan.davranis_notlari or hayvan.genel_notlar or hayvan.beslenme_bilgisi %}
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title"><i class="fas fa-clipboard me-2"></i> Notlar</h5>
+            {% if hayvan.davranis_notlari %}
+                <p><strong>Davranış:</strong> {{ hayvan.davranis_notlari }}</p>
+            {% endif %}
+            {% if hayvan.beslenme_bilgisi %}
+                <p><strong>Beslenme:</strong> {{ hayvan.beslenme_bilgisi }}</p>
+            {% endif %}
+            {% if hayvan.genel_notlar %}
+                <p><strong>Genel Notlar:</strong> {{ hayvan.genel_notlar }}</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 📈 Kilo Grafiği -->
+    {% if hayvan.kilo_kayitlari.exists %}
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title"><i class="fas fa-chart-line me-2"></i> Kilo Takibi</h5>
+            <canvas id="kiloChart" height="150"></canvas>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+{% if hayvan.kilo_kayitlari.exists %}
+const ctx = document.getElementById('kiloChart');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [{% for kayit in hayvan.kilo_kayitlari.all|dictsort:"tarih" %}'{{ kayit.tarih|date:"d M" }}',{% endfor %}],
+        datasets: [{
+            label: 'Kilo (kg)',
+            data: [{% for kayit in hayvan.kilo_kayitlari.all|dictsort:"tarih" %}{{ kayit.kilo }},{% endfor %}],
+            borderColor: '#198754',
+            backgroundColor: 'rgba(25, 135, 84, 0.1)',
+            fill: true,
+            tension: 0.3,
+        }]
+    },
+    options: {
+        scales: {
+            y: { beginAtZero: false }
+        }
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

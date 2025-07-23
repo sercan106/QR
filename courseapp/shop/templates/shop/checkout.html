@@ -1,0 +1,23 @@
+<!-- shop/templates/shop/checkout.html (İçerik Türkçe) -->
+{% extends 'ana.html' %}
+{% block content %}
+<div class="container my-5">
+    <h2>Ödeme</h2>
+    <p>Toplam: {{ toplam }} TL</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.adres.label }}
+        {{ form.adres }}
+        <!-- Stripe kart input (JS ile) -->
+        <script src="https://js.stripe.com/v3/"></script>
+        <div id="card-element"></div>
+        <button type="submit" class="btn btn-success">Öde</button>
+    </form>
+</div>
+{% endblock %}
+<script>
+    var stripe = Stripe('{{ stripe_public_key }}');
+    var elements = stripe.elements();
+    var card = elements.create('card');
+    card.mount('#card-element');
+</script>
