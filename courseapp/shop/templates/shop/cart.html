@@ -3,16 +3,317 @@
 
 {% block css_dosyalar %}
 <style>
-    .cart-table th, .cart-table td { text-align: center; vertical-align: middle; }
-    .quantity-form { display: inline-flex; align-items: center; }
-    .quantity-form input { width: 60px; text-align: center; border-radius: 0; }
-    .quantity-form .btn { padding: 0.375rem 0.75rem; }
+    :root {
+        --primary-color: #2ecc71;
+        --primary-hover: #27ae60;
+        --secondary-color: #3498db;
+        --dark-color: #2c3e50;
+        --light-color: #ecf0f1;
+        --danger-color: #e74c3c;
+        --text-color: #34495e;
+        --text-light: #7f8c8d;
+        --shadow-sm: 0 5px 15px rgba(0,0,0,0.05);
+        --shadow-md: 0 12px 24px rgba(0,0,0,0.15);
+        --transition: all 0.3s ease;
+    }
+
+    .cart-container {
+        margin-top: 2rem;
+        margin-bottom: 4rem;
+    }
+
+    .cart-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        position: relative;
+    }
+
+    .cart-header h2 {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: var(--dark-color);
+        display: inline-block;
+    }
+
+    .cart-header h2::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 4px;
+        background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+        border-radius: 2px;
+    }
+
+    .cart-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+        background: #fff;
+        margin-bottom: 2rem;
+    }
+
+    .cart-table thead {
+        background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+        color: white;
+    }
+
+    .cart-table th {
+        padding: 1.2rem;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .cart-table td {
+        padding: 1.5rem;
+        text-align: center;
+        vertical-align: middle;
+        border-bottom: 1px solid #eee;
+    }
+
+    .cart-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .product-info {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .product-img {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+
+    .product-name {
+        font-weight: 600;
+        color: var(--dark-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .product-category {
+        font-size: 0.85rem;
+        color: var(--text-light);
+    }
+
+    .price {
+        font-weight: 700;
+        color: var(--dark-color);
+    }
+
+    .quantity-control {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .quantity-btn {
+        width: 36px;
+        height: 36px;
+        border: 1px solid #ddd;
+        background: #f8f9fa;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .quantity-btn:hover {
+        background: #e9ecef;
+    }
+
+    .quantity-input {
+        width: 50px;
+        height: 36px;
+        text-align: center;
+        border: 1px solid #ddd;
+        border-left: none;
+        border-right: none;
+        -moz-appearance: textfield;
+    }
+
+    .quantity-input::-webkit-outer-spin-button,
+    .quantity-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .subtotal {
+        font-weight: 700;
+        color: var(--danger-color);
+    }
+
+    .remove-btn {
+        background: transparent;
+        border: none;
+        color: var(--danger-color);
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .remove-btn:hover {
+        transform: scale(1.2);
+    }
+
+    .cart-summary {
+        background: #fff;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: var(--shadow-sm);
+        margin-top: 2rem;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 1rem 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .summary-row:last-child {
+        border-bottom: none;
+    }
+
+    .total-row {
+        font-weight: 800;
+        font-size: 1.2rem;
+        color: var(--dark-color);
+    }
+
+    .checkout-btn {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 1rem;
+        width: 100%;
+        margin-top: 2rem;
+        transition: var(--transition);
+    }
+
+    .checkout-btn:hover {
+        background: var(--primary-hover);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(46, 204, 113, 0.3);
+    }
+
+    .empty-cart {
+        text-align: center;
+        padding: 4rem 0;
+    }
+
+    .empty-cart img {
+        width: 200px;
+        margin-bottom: 2rem;
+        opacity: 0.7;
+    }
+
+    .empty-cart h3 {
+        color: var(--text-light);
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+    }
+
+    .continue-shopping {
+        background: var(--secondary-color);
+        color: white;
+        padding: 0.8rem 2rem;
+        border-radius: 50px;
+        font-weight: 600;
+        display: inline-block;
+        transition: var(--transition);
+    }
+
+    .continue-shopping:hover {
+        background: #2980b9;
+        transform: translateY(-2px);
+        color: white;
+        text-decoration: none;
+    }
+
+    /* Toast Notification */
+    .toast-container {
+        z-index: 1100;
+    }
+
+    .toast {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: var(--shadow-md);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 992px) {
+        .product-info {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 10px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .cart-table thead {
+            display: none;
+        }
+
+        .cart-table tr {
+            display: block;
+            margin-bottom: 1.5rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        .cart-table td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-align: right;
+            padding: 1rem;
+        }
+
+        .cart-table td::before {
+            content: attr(data-label);
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-right: auto;
+            padding-right: 1rem;
+        }
+
+        .quantity-control {
+            justify-content: flex-end;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .cart-header h2 {
+            font-size: 1.8rem;
+        }
+
+        .product-img {
+            width: 60px;
+            height: 60px;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <h2 class="text-center mb-5 fw-bold text-primary" data-aos="fade-down">Sepetiniz</h2>
+<div class="container cart-container">
+    <div class="cart-header">
+        <h2>Alışveriş Sepetiniz</h2>
+    </div>
 
     {% if messages %}
     <div class="toast-container position-fixed top-0 end-0 p-3">
@@ -20,6 +321,7 @@
         <div class="toast align-items-center text-bg-{% if message.tags == 'success' %}success{% elif message.tags == 'warning' %}warning{% else %}info{% endif %} border-0" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
                 <div class="toast-body">
+                    <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'warning' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %} me-2"></i>
                     {{ message }}
                 </div>
                 <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
@@ -33,62 +335,101 @@
     {% endif %}
 
     {% if urunler %}
-    <table class="table table-bordered table-hover cart-table shadow-lg">
-        <thead class="table-light">
-            <tr>
-                <th>Ürün</th>
-                <th>Fiyat</th>
-                <th>Miktar</th>
-                <th>Ara Toplam</th>
-                <th>İşlem</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in urunler %}
-            <tr data-aos="fade-up">
-                <td>{{ item.urun.ad }}</td>
-                <td>{{ item.urun.fiyat }} TL</td>
-                <td>
-                    <form action="{% url 'update_cart_quantity' item.urun.pk %}" method="post" class="quantity-form">
-                        {% csrf_token %}
-                        <button type="button" class="btn btn-sm btn-secondary minus-btn">-</button>
-                        <input type="number" name="miktar" value="{{ item.miktar }}" min="1" max="{{ item.urun.stok }}" class="form-control quantity-input" readonly>
-                        <button type="button" class="btn btn-sm btn-secondary plus-btn">+</button>
-                        <button type="submit" class="btn btn-sm btn-secondary d-none update-btn">Güncelle</button> <!-- Gizli submit butonu -->
-                    </form>
-                </td>
-                <td>{{ item.subtotal }} TL</td>
-                <td>
-                    <a href="{% url 'remove_from_cart' item.urun.pk %}" class="btn btn-sm btn-danger">Kaldır</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-        <tfoot>
-            <tr>
-                <td colspan="3" class="fw-bold text-end">Toplam:</td>
-                <td colspan="2" class="fw-bold text-primary">{{ toplam }} TL</td>
-            </tr>
-        </tfoot>
-    </table>
-    <div class="text-end mt-4">
-        <a href="{% url 'checkout' %}" class="btn btn-primary rounded-pill px-5">Ödemeye Geç</a>
+    <div class="table-responsive">
+        <table class="cart-table">
+            <thead>
+                <tr>
+                    <th>Ürün</th>
+                    <th>Fiyat</th>
+                    <th>Miktar</th>
+                    <th>Toplam</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in urunler %}
+                <tr>
+                    <td data-label="Ürün">
+                        <div class="product-info">
+                            {% with ilk_resim=item.urun.resimler.first %}
+                            <img src="{% if ilk_resim %}{{ ilk_resim.resim.url }}{% else %}{% static 'images/default-product.jpg' %}{% endif %}" 
+                                 class="product-img" 
+                                 alt="{{ item.urun.ad }}">
+                            {% endwith %}
+                            <div>
+                                <div class="product-name">{{ item.urun.ad }}</div>
+                                <div class="product-category">{{ item.urun.kategori.ad }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td data-label="Fiyat" class="price">{{ item.urun.fiyat }} TL</td>
+                    <td data-label="Miktar">
+                        <form action="{% url 'update_cart_quantity' item.urun.pk %}" method="post" class="quantity-form">
+                            {% csrf_token %}
+                            <div class="quantity-control">
+                                <button type="button" class="quantity-btn minus-btn">-</button>
+                                <input type="number" name="miktar" value="{{ item.miktar }}" 
+                                       min="1" max="{{ item.urun.stok }}" 
+                                       class="quantity-input" readonly>
+                                <button type="button" class="quantity-btn plus-btn">+</button>
+                                <button type="submit" class="d-none update-btn">Güncelle</button>
+                            </div>
+                        </form>
+                    </td>
+                    <td data-label="Toplam" class="subtotal">{{ item.subtotal }} TL</td>
+                    <td data-label="">
+                        <form action="{% url 'remove_from_cart' item.urun.pk %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="remove-btn" title="Ürünü Kaldır">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="cart-summary">
+        <div class="summary-row">
+            <span>Ara Toplam:</span>
+            <span>{{ toplam }} TL</span>
+        </div>
+        <div class="summary-row">
+            <span>Kargo:</span>
+            <span>{% if toplam >= 150 %}Ücretsiz{% else %}15.00 TL{% endif %}</span>
+        </div>
+        <div class="summary-row total-row">
+            <span>Genel Toplam:</span>
+            <span>{% if toplam >= 150 %}{{ toplam }} TL{% else %}{{ toplam|add:15 }} TL{% endif %}</span>
+        </div>
+        <button class="checkout-btn" onclick="window.location.href='{% url 'checkout' %}'">
+            <i class="fas fa-credit-card me-2"></i> Ödemeye Geç
+        </button>
     </div>
     {% else %}
-    <p class="text-center alert alert-info">Sepetiniz boş. Alışverişe devam edin!</p>
+    <div class="empty-cart">
+        <img src="{% static 'img/empty-cart.svg' %}" alt="Boş Sepet">
+        <h3>Sepetinizde ürün bulunmamaktadır</h3>
+        <a href="{% url 'shop_home' %}" class="continue-shopping">
+            <i class="fas fa-shopping-bag me-2"></i> Alışverişe Devam Et
+        </a>
+    </div>
     {% endif %}
 </div>
 {% endblock %}
 
 {% block js_dosyalar %}
 <script>
+    // Miktar artırma/azaltma fonksiyonları
     document.querySelectorAll('.minus-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const input = btn.nextElementSibling;
             let value = parseInt(input.value);
             if (value > parseInt(input.min)) {
                 input.value = value - 1;
-                btn.parentElement.querySelector('.update-btn').click();  // Form submit et
+                btn.closest('form').querySelector('.update-btn').click();
             }
         });
     });
@@ -99,8 +440,15 @@
             let value = parseInt(input.value);
             if (value < parseInt(input.max)) {
                 input.value = value + 1;
-                btn.parentElement.querySelector('.update-btn').click();  // Form submit et
+                btn.closest('form').querySelector('.update-btn').click();
             }
+        });
+    });
+
+    // Mobilde input alanına tıklanınca klavye açılmasını engelle
+    document.querySelectorAll('.quantity-input').forEach(input => {
+        input.addEventListener('click', (e) => {
+            e.preventDefault();
         });
     });
 </script>

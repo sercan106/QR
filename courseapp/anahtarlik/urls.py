@@ -5,8 +5,7 @@ from . import views
 
 urlpatterns = [
     path('', views.ev, name='ev'),
-    path('tag/', views.tag, name='tag'),
-    path('etiket/<uuid:etiket_id>/', views.etiket_goruntule, name='etiket_goruntule'),
+
 
     # Kullanıcı Paneli
     path('panel/', views.kullanici_paneli, name='kullanici_paneli'),
@@ -14,19 +13,15 @@ urlpatterns = [
     path('panel/pet/<int:pet_id>/', views.pet_detail, name='pet_detail'),
     path('panel/pet/<int:pet_id>/pdf/', views.hayvan_pdf_indir, name='hayvan_pdf_indir'),
     path('panel/profil-duzenle/', views.profil_duzenle, name='profil_duzenle'),
-
+    path("panel/found/<int:evcil_hayvan_id>/", views.hayvan_bulundu, name="mark_found"),
+  
 
     # Evcil hayvan işlemleri
     path('panel/kayip-bildir/<int:evcil_hayvan_id>/', views.kayip_bildir, name='kayip_bildir'),
-    path('panel/saglik-kaydi/<int:evcil_hayvan_id>/', views.saglik_kaydi_ekle, name='saglik_kaydi_ekle'),
-    path('panel/beslenme-kaydi/<int:evcil_hayvan_id>/', views.beslenme_kaydi_ekle, name='beslenme_kaydi_ekle'),
+
     path('panel/edit-pet/<int:pet_id>/', views.edit_pet, name='edit_pet'),
     path('panel/delete-pet/<int:pet_id>/', views.delete_pet, name='delete_pet'),
-    path('panel/alerji-ekle/<int:evcil_hayvan_id>/', views.alerji_ekle, name='alerji_ekle'),
-    path('panel/asi-takvimi-ekle/<int:evcil_hayvan_id>/', views.asi_takvimi_ekle, name='asi_takvimi_ekle'),
-    path('panel/ilac-kaydi-ekle/<int:evcil_hayvan_id>/', views.ilac_kaydi_ekle, name='ilac_kaydi_ekle'),
-    path('panel/ameliyat-kaydi-ekle/<int:evcil_hayvan_id>/', views.ameliyat_kaydi_ekle, name='ameliyat_kaydi_ekle'),
-    path('panel/kilo-kaydi-ekle/<int:evcil_hayvan_id>/', views.kilo_kaydi_ekle, name='kilo_kaydi_ekle'),
+
 
     # Django login/logout
     path('auth/', include('django.contrib.auth.urls')),

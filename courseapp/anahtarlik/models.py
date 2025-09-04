@@ -43,6 +43,9 @@ class EvcilHayvan(models.Model):
     kayip_bildirim_tarihi = models.DateTimeField(null=True, blank=True)
     odul_miktari = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     resim = models.ImageField(upload_to='evcil_hayvanlar/', null=True, blank=True)
+    
+    def resim_varsa_url(self):
+        return self.resim.url if self.resim else None
 
     def __str__(self):
         return f"{self.ad} ({self.get_tur_display()})"
@@ -50,7 +53,7 @@ class EvcilHayvan(models.Model):
 class Etiket(models.Model):
     etiket_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     seri_numarasi = models.CharField(max_length=50, unique=True)
-    evcil_hayvan = models.OneToOneField(EvcilHayvan, on_delete=models.CASCADE, null=True, blank=True)
+    evcil_hayvan = models.OneToOneField('EvcilHayvan', on_delete=models.CASCADE, null=True, blank=True)
     qr_kod_url = models.URLField(blank=True)
     aktif = models.BooleanField(default=False)
     olusturulma_tarihi = models.DateTimeField(auto_now_add=True)
@@ -58,7 +61,11 @@ class Etiket(models.Model):
 
     def __str__(self):
         return f"Etiket {self.seri_numarasi} - {self.evcil_hayvan.ad if self.evcil_hayvan else 'Tanımlanmamış'}"
-
+    def save(self, *args, **kwargs):
+        if not self.qr_kod_url:
+            self.qr_kod_url = f"http://127.0.0.1:8000/tag/{self.etiket_id}/"  # DÜZELTİLDİ
+        super().save(*args, **kwargs)
+        
 class Alerji(models.Model):
     evcil_hayvan = models.ForeignKey(EvcilHayvan, on_delete=models.CASCADE, related_name='alerjiler')
     alerji_turu = models.CharField(max_length=100)
@@ -119,11 +126,24 @@ class BeslenmeKaydi(models.Model):
     def __str__(self):
         return f"{self.evcil_hayvan.ad} - {self.besin_turu}"
 
+from django.db import models
+from django.core.validators import MinValueValidator
+
 class KiloKaydi(models.Model):
     evcil_hayvan = models.ForeignKey(EvcilHayvan, on_delete=models.CASCADE, related_name='kilo_kayitlari')
-    kilo = models.DecimalField(max_digits=5, decimal_places=2)
+    kilo = models.DecimalField(
+        max_digits=5, 
+        decimal_places=2, 
+        validators=[MinValueValidator(0.1)],  # Minimum 0.1 kg olmalı
+        null=False,  # NULL değerlere izin verme
+        blank=False  # Formda boş bırakılamaz
+    )
     tarih = models.DateField()
     notlar = models.TextField(blank=True)
 
     def __str__(self):
         return f"{self.evcil_hayvan.ad} - {self.kilo} kg ({self.tarih})"
+
+    class Meta:
+        verbose_name = "Kilo Kaydı"
+        verbose_name_plural = "Kilo Kayıtları"

@@ -6,8 +6,13 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('anahtarlik.urls')),  # anahtarlik uygulamasının URL'lerini dahil et
+    path('', include('anahtarlik.urls')),
     path('accaunt/', include('accaunt.urls')),
     path('shop/', include('shop.urls')),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) \
-  + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    path('tag/', include('etiket.urls', namespace='etiket')),  # ✅ Etiket app'ini dahil ettik
+    path('petpanel/', include('petpanel.urls')),  # ekli olmalı
+]
+
+# Medya ve statik dosyalar
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

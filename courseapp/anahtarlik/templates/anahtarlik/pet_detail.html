@@ -1,270 +1,689 @@
+<!-- templates/anahtarlik/pet_detail.html -->
 {% extends "ana.html" %}
 {% load static %}
 
-{% block baslik %}{{ hayvan.ad }} - Genel Bakış{% endblock %}
+{% block baslik %}{{ hayvan.ad|default:"Bilinmeyen Hayvan" }} - Genel Bakış | PetSafe Hub{% endblock %}
+
+{% block css_dosyalar %}
+<style>
+    /* Özel Animasyonlar */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .animate-fade-in {
+        animation: fadeIn 0.5s ease-out forwards;
+    }
+    
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    .delay-4 { animation-delay: 0.4s; }
+    
+    /* Pet Status Badge */
+    .pet-status-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.8rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        z-index: 1;
+    }
+    
+    /* Pet Image Container */
+    .pet-image-container {
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+        height: 100%;
+        min-height: 250px;
+    }
+    
+    .pet-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+    
+    .pet-image-container:hover .pet-image {
+        transform: scale(1.05);
+    }
+    
+    /* Info Cards */
+    .info-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+    
+    .info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    
+    .info-card .card-header {
+        background: linear-gradient(135deg, #2c3e50, #18bc9c);
+        color: white;
+        font-weight: 600;
+        border-bottom: none;
+        padding: 12px 20px;
+    }
+    
+    /* Pet Info Grid */
+    .pet-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+    
+    .pet-info-item {
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        border-radius: 8px;
+        background: rgba(24, 188, 156, 0.05);
+    }
+    
+    .pet-info-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: rgba(24, 188, 156, 0.1);
+        color: #18bc9c;
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+    
+    /* Status Button */
+    .status-btn {
+        border-radius: 50px;
+        padding: 8px 20px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    
+    .status-btn i {
+        margin-right: 8px;
+    }
+    
+    .status-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+    }
+    
+    /* Accordion Styles */
+    .pet-accordion .accordion-item {
+        border-radius: 10px !important;
+        overflow: hidden;
+        margin-bottom: 10px;
+        border: none;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+    }
+    
+    .pet-accordion .accordion-button {
+        border-radius: 10px 10px 0 0 !important;
+        font-weight: 500;
+        padding: 12px 20px;
+    }
+    
+    .pet-accordion .accordion-button:not(.collapsed) {
+        background-color: rgba(24, 188, 156, 0.1);
+        color: #2c3e50;
+    }
+    
+    .pet-accordion .accordion-body {
+        padding: 15px 20px;
+    }
+    
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .pet-info-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .pet-info-item {
+            padding: 8px;
+        }
+        
+        .pet-info-icon {
+            width: 35px;
+            height: 35px;
+            margin-right: 10px;
+        }
+    }
+    
+    /* QR Code Styling */
+    .qr-code-container {
+        background: white;
+        padding: 10px;
+        border-radius: 10px;
+        display: inline-flex;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .qr-code-container:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container my-5">
+<div class="container py-4">
+    <!-- Başlık ve Düzenle Butonu -->
+    <div class="d-flex justify-content-between align-items-center mb-4 animate-fade-in">
+        <div>
+            <h1 class="h3 mb-0 fw-bold">{{ hayvan.ad|default:"Bilinmeyen Hayvan" }}</h1>
+            <p class="text-muted mb-0">{{ hayvan.get_tur_display|default:"Bilinmeyen Tür" }} • {{ hayvan.get_cinsiyet_display|default:"Bilinmeyen Cinsiyet" }}</p>
+        </div>
+            <a href="{% url 'pet_edit' pet_id=hayvan.id %}" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-edit me-1"></i> Düzenle
+            </a>
 
-    <!-- Başlık -->
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-        <h2 class="fw-bold text-primary mb-0">🐾 {{ hayvan.ad }}</h2>
-        <a href="#" class="btn btn-outline-secondary btn-sm">
-            <i class="fas fa-edit me-1"></i> Panelde Düzenle
-        </a>
     </div>
 
     <!-- Profil Kartı -->
-    <div class="card mb-4 shadow-sm">
-        <div class="row g-0">
-            <div class="col-md-4">
-                {% if hayvan.resim %}
-                    <img src="{{ hayvan.resim.url }}" class="img-fluid rounded-start w-100 h-100 object-fit-cover" alt="{{ hayvan.ad }}">
-                {% else %}
-                    {% with hayvan.tur as tur %}
-                        {% if tur == 'kopek' %}
-                            <img src="{% static 'img/icons/dog-icon.jpg' %}" class="img-fluid rounded-start w-100 h-100 object-fit-cover" alt="Köpek">
-                        {% elif tur == 'kedi' %}
-                            <img src="{% static 'img/icons/cat-icon.jpg' %}" class="img-fluid rounded-start w-100 h-100 object-fit-cover" alt="Kedi">
-                        {% else %}
-                            <img src="{% static 'img/icons/other-pet.jpg' %}" class="img-fluid rounded-start w-100 h-100 object-fit-cover" alt="Evcil Hayvan">
-                        {% endif %}
-                    {% endwith %}
-                {% endif %}
-            </div>
-            <div class="col-md-8">
-                <div class="card-body">
-                    <h5 class="card-title">{{ hayvan.ad }} ({{ hayvan.get_tur_display }})</h5>
-                    <p><strong>Cins:</strong> {{ hayvan.cins }}</p>
-                    <p><strong>Cinsiyet:</strong> {{ hayvan.get_cinsiyet_display }}</p>
-                    {% if hayvan.dogum_tarihi %}
-                        <p><strong>Doğum:</strong> {{ hayvan.dogum_tarihi|date:"d F Y" }}</p>
-                    {% endif %}
-                    {% if hayvan.kayip_durumu %}
-                        <p class="text-danger"><strong>Durum:</strong> Kayıp 🆘</p>
-                        <p class="mb-0"><strong>Bildirim:</strong> {{ hayvan.kayip_bildirim_tarihi|date:"d.m.Y H:i" }}</p>
-                    {% else %}
-                        <p class="text-success"><strong>Durum:</strong> Güvende ✅</p>
-                    {% endif %}
-                    {% if hayvan.odul_miktari %}
-                        <p><strong>Ödül:</strong> {{ hayvan.odul_miktari }} ₺</p>
-                    {% endif %}
-                    {% if hayvan.etiket %}
-                        <p><strong>Etiket No:</strong> {{ hayvan.etiket.seri_numarasi }}</p>
-                        <p><strong>QR:</strong> <a href="{{ hayvan.etiket.qr_kod_url }}" class="link-primary" target="_blank">Görüntüle</a></p>
-                    {% endif %}
+    <div class="row mb-4 animate-fade-in delay-1">
+        <div class="col-12">
+            <div class="card info-card">
+                <div class="row g-0">
+                    <!-- Pet Image -->
+                    <div class="col-md-4 position-relative">
+                        <div class="pet-image-container">
+                            {% if hayvan.resim %}
+                                <img src="{{ hayvan.resim.url }}" class="pet-image" alt="{{ hayvan.ad|default:'Bilinmeyen Hayvan' }}">
+                            {% else %}
+                                {% with hayvan.tur as tur %}
+                                    {% if tur == 'kopek' %}
+                                        <img src="{% static 'img/icons/dog-icon.jpg' %}" class="pet-image" alt="Köpek">
+                                    {% elif tur == 'kedi' %}
+                                        <img src="{% static 'img/icons/cat-icon.jpg' %}" class="pet-image" alt="Kedi">
+                                    {% else %}
+                                        <img src="{% static 'img/icons/other-pet.jpg' %}" class="pet-image" alt="Evcil Hayvan">
+                                    {% endif %}
+                                {% endwith %}
+                            {% endif %}
+                        </div>
+                        <span class="pet-status-badge {% if hayvan.kayip_durumu %}bg-danger{% else %}bg-success{% endif %}">
+                            {% if hayvan.kayip_durumu %}Kayıp 🚨{% else %}Güvende ✅{% endif %}
+                        </span>
+                    </div>
+                    
+                    <!-- Pet Info -->
+                    <div class="col-md-8">
+                        <div class="card-body">
+                            <div class="pet-info-grid mb-3">
+                                {% if hayvan.dogum_tarihi %}
+                                <div class="pet-info-item">
+                                    <div class="pet-info-icon">
+                                        <i class="fas fa-birthday-cake"></i>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted">Yaş</small>
+                                        <p class="mb-0">{{ hayvan.dogum_tarihi|timesince }}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                {% if hayvan.cins %}
+                                <div class="pet-info-item">
+                                    <div class="pet-info-icon">
+                                        <i class="fas fa-dna"></i>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted">Cins</small>
+                                        <p class="mb-0">{{ hayvan.cins }}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="pet-info-item">
+                                    <div class="pet-info-icon">
+                                        <i class="fas fa-paw"></i>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted">Tür</small>
+                                        <p class="mb-0">{{ hayvan.get_tur_display|default:"Bilinmeyen Tür" }}</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="pet-info-item">
+                                    <div class="pet-info-icon">
+                                        <i class="fas fa-venus-mars"></i>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted">Cinsiyet</small>
+                                        <p class="mb-0">{{ hayvan.get_cinsiyet_display|default:"Bilinmeyen Cinsiyet" }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Status Button -->
+                            <div class="d-flex flex-wrap gap-2 mt-3">
+                                {% if hayvan.kayip_durumu %}
+                                    <a href="{% url 'mark_found' evcil_hayvan_id=hayvan.id %}" class="status-btn btn btn-success">
+                                        <i class="fas fa-check-circle me-1"></i> Hayvan Bulundu
+                                    </a>
+                                    {% if hayvan.odul_miktari %}
+                                    <span class="status-btn btn btn-warning">
+                                        <i class="fas fa-award me-1"></i> Ödül: {{ hayvan.odul_miktari }} ₺
+                                    </span>
+                                    {% endif %}
+                                {% else %}
+                                    <a href="{% url 'kayip_bildir' evcil_hayvan_id=hayvan.id %}" class="status-btn btn btn-outline-danger">
+                                        <i class="fas fa-exclamation-triangle me-1"></i> Kayıp Bildir
+                                    </a>
+                                {% endif %}
+                                
+                                {% if hayvan.etiket %}
+                                <a href="{{ hayvan.etiket.qr_kod_url }}" class="status-btn btn btn-outline-primary" target="_blank">
+                                    <i class="fas fa-qrcode me-1"></i> QR Kod
+                                </a>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Etiket Bilgisi -->
+                            {% if hayvan.etiket %}
+                            <div class="mt-3">
+                                <p class="mb-1"><strong>Etiket No:</strong> {{ hayvan.etiket.seri_numarasi|default:"Bilinmeyen Etiket" }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Notlar -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="fas fa-sticky-note me-2"></i>Genel Notlar</span>
-            <a href="#" class="btn btn-sm btn-outline-primary">Düzenle</a>
-        </div>
-        <div class="card-body">
-            <p><strong>Genel:</strong> {{ hayvan.genel_not|default:"-" }}</p>
-            <p><strong>Beslenme:</strong> {{ hayvan.beslenme_notu|default:"-" }}</p>
-            <p><strong>Davranış:</strong> {{ hayvan.davranis_notu|default:"-" }}</p>
-            <p><strong>Sağlık:</strong> {{ hayvan.saglik_notu|default:"-" }}</p>
-        </div>
-    </div>
+    <!-- Notlar ve Sahip Bilgisi -->
+    <div class="row mb-4 animate-fade-in delay-2">
+        <!-- Notlar -->
+        <div class="col-md-6 mb-3 mb-md-0">
+            <div class="card info-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-sticky-note me-2"></i> Notlar</span>
+                    <a href="{% url 'notlari_duzenle' hayvan.id %}" class="btn btn-sm btn-outline-primary">Düzenle</a>
 
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-2">Genel Not</h6>
+                        <p>{{ hayvan.genel_not|default:"-" }}</p>
+                    </div>                    
+                    <div>
+                        <h6 class="text-muted mb-2">Davranış</h6>
+                        <p>{{ hayvan.davranis_notu|default:"-" }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-2">Sağlık</h6>
+                        <p>{{ hayvan.saglik_notu|default:"-" }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-2">Beslenme</h6>
+                        <p>{{ hayvan.beslenme_notu|default:"-" }}</p>
+                    </div>
+
+                </div>
+            </div> 
+        </div>
+        
     <!-- Sahip Bilgisi -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="fas fa-user me-2"></i>Sahip Bilgisi</span>
-            <a href="#" class="btn btn-sm btn-outline-primary">Düzenle</a>
-        </div>
-        <div class="card-body">
-            <p><strong>Ad Soyad:</strong> {{ hayvan.sahip.ad }} {{ hayvan.sahip.soyad }}</p>
-            <p><strong>Telefon:</strong> {{ hayvan.sahip.telefon }}</p>
-            <p><strong>Yedek Tel:</strong> {{ hayvan.sahip.yedek_telefon|default:"-" }}</p>
-            <p><strong>Acil Durum:</strong> {{ hayvan.sahip.acil_durum_kontagi|default:"-" }}</p>
-            <p><strong>Adres:</strong> {{ hayvan.sahip.adres|default:"-" }}</p>
+    <div class="col-md-6">
+        <div class="card info-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-user me-2"></i> Sahip Bilgisi</span>
+                <a href="{% url 'sahip_bilgilerini_duzenle' hayvan.id %}" class="btn btn-sm btn-outline-primary">Düzenle</a>
+
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="me-3">
+                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <i class="fas fa-user text-muted"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h5 class="mb-0">
+                            {{ hayvan.sahip.ad|default:"Bilinmeyen Ad" }} {{ hayvan.sahip.soyad|default:"Bilinmeyen Soyad" }}
+                        </h5>
+                        <small class="text-muted">Kayıtlı sahip</small>
+                    </div>
+                </div>
+
+                <ul class="list-unstyled">
+                    <!-- Kullanıcı E-Posta -->
+                    {% if hayvan.sahip.kullanici.email %}
+                    <li class="mb-2">
+                        <i class="fas fa-envelope me-2 text-primary"></i>
+                        <a href="mailto:{{ hayvan.sahip.kullanici.email }}" class="text-decoration-none">{{ hayvan.sahip.kullanici.email }}</a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Kullanıcı Adı -->
+                    <li class="mb-2">
+                        <i class="fas fa-user-tag me-2 text-primary"></i>
+                        <span class="text-muted">Kullanıcı Adı:</span>
+                        <strong>{{ hayvan.sahip.kullanici.username }}</strong>
+                    </li>
+
+                    <!-- Telefonlar -->
+                    <li class="mb-2">
+                        <i class="fas fa-phone me-2 text-primary"></i>
+                        <a href="tel:{{ hayvan.sahip.telefon|default:'#' }}" class="text-decoration-none">{{ hayvan.sahip.telefon|default:"Bilinmeyen Telefon" }}</a>
+                    </li>
+
+                    {% if hayvan.sahip.yedek_telefon %}
+                    <li class="mb-2">
+                        <i class="fas fa-phone-alt me-2 text-primary"></i>
+                        <a href="tel:{{ hayvan.sahip.yedek_telefon }}" class="text-decoration-none">{{ hayvan.sahip.yedek_telefon }}</a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Acil Durum Kişisi -->
+                    {% if hayvan.sahip.acil_durum_kontagi %}
+                    <li class="mb-2">
+                        <i class="fas fa-exclamation-triangle me-2 text-primary"></i>
+                        {{ hayvan.sahip.acil_durum_kontagi }}
+                    </li>
+                    {% endif %}
+
+                    <!-- Adres -->
+                    {% if hayvan.sahip.adres %}
+                    <li>
+                        <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+                        <small>{{ hayvan.sahip.adres|truncatechars:50 }}</small>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
         </div>
     </div>
 
-    <!-- Kilo Geçmişi -->
-    {% if hayvan.kilo_kayitlari.exists %}
-    <div class="card mb-4 shadow-sm">
-        <div class="card-body">
-            <h5 class="card-title"><i class="fas fa-chart-line me-2"></i>Kilo Geçmişi</h5>
-            <canvas id="kiloChart" height="150"></canvas>
+    </div>
+
+    <!-- Kilo Grafiği -->
+    {% if kilo_kayitlari|length > 0 %}
+    <div class="card info-card mb-4 animate-fade-in delay-3" style="height: 300px;">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-chart-line me-2"></i> Kilo Takibi</span>
+            <a href="#" class="btn btn-sm btn-outline-primary">Yeni Kayıt</a>
+        </div>
+        <div class="card-body" style="height: 100%;">
+            <canvas id="kiloChart"></canvas>
         </div>
     </div>
     {% endif %}
 
-    <!-- Accordion Başlangıç -->
-    <div class="accordion mb-5" id="accordionData">
-
-        <!-- Alerjiler -->
+    <!-- Detaylı Bilgiler Accordion -->
+    <div class="accordion pet-accordion mb-5 animate-fade-in delay-4" id="petAccordion">
+        <!-- 🧪 Alerjiler -->
         <div class="accordion-item">
-            <h2 class="accordion-header" id="alerjiHeader">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#alerjiCollapse">
-                    🧪 Alerjiler
+            <h2 class="accordion-header" id="headingAllergies">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAllergies" aria-expanded="false">
+                    <i class="fas fa-allergies me-2 text-danger"></i> Alerjiler
                 </button>
             </h2>
-            <div id="alerjiCollapse" class="accordion-collapse collapse" aria-labelledby="alerjiHeader">
+            <div id="collapseAllergies" class="accordion-collapse collapse" aria-labelledby="headingAllergies">
                 <div class="accordion-body">
                     {% if hayvan.alerjiler.exists %}
-                        <ul class="list-group">
+                        <div class="row">
                             {% for a in hayvan.alerjiler.all %}
-                                <li class="list-group-item">
-                                    <strong>{{ a.alerji_turu }}</strong><br>
-                                    {{ a.aciklama|default:"-" }}<br>
-                                    <small class="text-muted">{{ a.kaydedilme_tarihi|date:"d.m.Y" }}</small>
-                                </li>
+                                <div class="col-md-6 mb-3">
+                                    <div class="pet-list-item p-3">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <strong class="text-danger">{{ a.alerji_turu }}</strong>
+                                            <small class="text-muted">{{ a.kaydedilme_tarihi|date:"d.m.Y" }}</small>
+                                        </div>
+                                        <p class="mb-2">{{ a.aciklama|default:"-" }}</p>
+                                        <div class="d-flex gap-2">
+                                            <a href="{% url 'alerji_duzenle' a.id %}" class="btn btn-sm btn-outline-primary">Düzenle</a>
+                                            <a href="{% url 'alerji_sil' a.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Silmek istediğinize emin misiniz?')">Sil</a>
+                                        </div>
+                                    </div>
+                                </div>
                             {% endfor %}
-                        </ul>
+                        </div>
                     {% else %}
                         <p class="text-muted">Kayıt bulunamadı.</p>
                     {% endif %}
-                    <a href="#" class="btn btn-sm btn-outline-primary mt-2">Panelde Yönet</a>
+                    <a href="{% url 'alerji_ekle' hayvan.id %}" class="btn btn-sm btn-success mt-3">
+                        <i class="fas fa-plus me-1"></i> Yeni Alerji Ekle
+                    </a>
                 </div>
             </div>
         </div>
 
-        <!-- Aşı Takvimi -->
+        <!-- 💉 Sağlık Kayıtları -->
         <div class="accordion-item">
-            <h2 class="accordion-header" id="asiHeader">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#asiCollapse">
-                    💉 Aşı Takvimi
+            <h2 class="accordion-header" id="headingHealth">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHealth" aria-expanded="false">
+                    <i class="fas fa-syringe me-2 text-primary"></i> Sağlık Kaydı
                 </button>
             </h2>
-            <div id="asiCollapse" class="accordion-collapse collapse" aria-labelledby="asiHeader">
+            <div id="collapseHealth" class="accordion-collapse collapse" aria-labelledby="headingHealth">
                 <div class="accordion-body">
-                    {% if hayvan.asi_takvimi.exists %}
-                        <ul class="list-group">
-                            {% for asi in hayvan.asi_takvimi.all %}
-                                <li class="list-group-item">
-                                    <strong>{{ asi.asi_turu }}</strong> — Plan: {{ asi.planlanan_tarih|date:"d.m.Y" }}
-                                    {% if asi.tamamlandi %}
-                                        <span class="badge bg-success ms-2">Tamamlandı</span>
-                                    {% else %}
-                                        <span class="badge bg-warning text-dark ms-2">Bekliyor</span>
-                                    {% endif %}
-                                    <br><small>{{ asi.notlar|default:"-" }}</small>
-                                </li>
+                    {% if hayvan.saglik_kayitlari.exists %}
+                        <div class="row">
+                            {% for s in hayvan.saglik_kayitlari.all %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="pet-list-item p-3">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <strong>{{ s.asi_turu }}</strong>
+                                            <small class="text-muted">{{ s.asi_tarihi|date:"d.m.Y" }}</small>
+                                        </div>
+                                        <p class="mb-2 text-muted">{{ s.notlar|default:"-" }}</p>
+                                        <div class="d-flex gap-2">
+                                            <a href="{% url 'saglik_duzenle' s.id %}" class="btn btn-sm btn-outline-primary">Düzenle</a>
+                                            <a href="{% url 'saglik_sil' s.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Silmek istediğinizden emin misiniz?')">Sil</a>
+                                        </div>
+                                    </div>
+                                </div>
                             {% endfor %}
-                        </ul>
+                        </div>
                     {% else %}
-                        <p class="text-muted">Takvim kaydı yok.</p>
+                        <p class="text-muted">Sağlık kaydı yok.</p>
                     {% endif %}
-                    <a href="#" class="btn btn-sm btn-outline-primary mt-2">Panelde Yönet</a>
+                    <a href="{% url 'saglik_ekle' hayvan.id %}" class="btn btn-sm btn-success mt-3">
+                        <i class="fas fa-plus me-1"></i> Yeni Sağlık Kaydı Ekle
+                    </a>
                 </div>
             </div>
         </div>
 
-        <!-- İlaçlar -->
+        <!-- Diğer Accordion Öğeleri... -->
+        <!-- 💊 İlaç Kayıtları -->
         <div class="accordion-item">
-            <h2 class="accordion-header" id="ilacHeader">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#ilacCollapse">
-                    💊 İlaç Kayıtları
+            <h2 class="accordion-header" id="headingMedications">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMedications" aria-expanded="false">
+                    <i class="fas fa-pills me-2 text-warning"></i> İlaç Kayıtları
                 </button>
             </h2>
-            <div id="ilacCollapse" class="accordion-collapse collapse" aria-labelledby="ilacHeader">
+            <div id="collapseMedications" class="accordion-collapse collapse" aria-labelledby="headingMedications">
                 <div class="accordion-body">
                     {% if hayvan.ilac_kayitlari.exists %}
-                        <ul class="list-group">
-                            {% for ilac in hayvan.ilac_kayitlari.all %}
-                                <li class="list-group-item">
-                                    <strong>{{ ilac.ilac_adi }}</strong> ({{ ilac.baslangic_tarihi }} - {{ ilac.bitis_tarihi|default:"?" }})<br>
-                                    Dozaj: {{ ilac.dozaj|default:"-" }}<br>
-                                    <small>{{ ilac.notlar|default:"-" }}</small>
-                                </li>
+                        <div class="row">
+                            {% for i in hayvan.ilac_kayitlari.all %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="pet-list-item p-3">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <strong class="text-warning">{{ i.ilac_adi }}</strong>
+                                            <small class="text-muted">{{ i.baslangic_tarihi|date:"d.m.Y" }} - {{ i.bitis_tarihi|date:"d.m.Y"|default:"Devam ediyor" }}</small>
+                                        </div>
+                                        <p class="mb-1"><small>Dozaj: {{ i.dozaj|default:"-" }}</small></p>
+                                        <p class="mb-2">{{ i.notlar|default:"-" }}</p>
+                                        <div class="d-flex gap-2">
+                                            <a href="{% url 'ilac_duzenle' i.id %}" class="btn btn-sm btn-outline-primary">Düzenle</a>
+                                            <a href="{% url 'ilac_sil' i.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Silmek istediğinize emin misiniz?')">Sil</a>
+                                        </div>
+                                    </div>
+                                </div>
                             {% endfor %}
-                        </ul>
+                        </div>
                     {% else %}
                         <p class="text-muted">Kayıt bulunamadı.</p>
                     {% endif %}
-                    <a href="#" class="btn btn-sm btn-outline-primary mt-2">Panelde Yönet</a>
+                    <a href="{% url 'ilac_ekle' hayvan.id %}" class="btn btn-sm btn-success mt-3">
+                        <i class="fas fa-plus me-1"></i> Yeni İlaç Ekle
+                    </a>
                 </div>
             </div>
         </div>
 
-        <!-- Ameliyatlar -->
+        <!-- 🏥 Ameliyat Kayıtları -->
         <div class="accordion-item">
-            <h2 class="accordion-header" id="ameliyatHeader">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#ameliyatCollapse">
-                    🏥 Ameliyat Geçmişi
+            <h2 class="accordion-header" id="headingSurgeries">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSurgeries" aria-expanded="false">
+                    <i class="fas fa-procedures me-2 text-danger"></i> Ameliyat Geçmişi
                 </button>
             </h2>
-            <div id="ameliyatCollapse" class="accordion-collapse collapse" aria-labelledby="ameliyatHeader">
+            <div id="collapseSurgeries" class="accordion-collapse collapse" aria-labelledby="headingSurgeries">
                 <div class="accordion-body">
                     {% if hayvan.ameliyat_kayitlari.exists %}
-                        <ul class="list-group">
-                            {% for ameliyat in hayvan.ameliyat_kayitlari.all %}
-                                <li class="list-group-item">
-                                    <strong>{{ ameliyat.ameliyat_turu }}</strong> – {{ ameliyat.tarih }}<br>
-                                    Veteriner: {{ ameliyat.veteriner|default:"-" }}<br>
-                                    <small>{{ ameliyat.notlar|default:"-" }}</small>
-                                </li>
+                        <div class="row">
+                            {% for a in hayvan.ameliyat_kayitlari.all %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="pet-list-item p-3">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <strong>{{ a.ameliyat_turu }}</strong>
+                                            <small class="text-muted">{{ a.tarih|date:"d.m.Y" }}</small>
+                                        </div>
+                                        <p class="mb-1"><small>Veteriner: {{ a.veteriner|default:"-" }}</small></p>
+                                        <p class="mb-2">{{ a.notlar|default:"-" }}</p>
+                                        <div class="d-flex gap-2">
+                                            <a href="{% url 'ameliyat_duzenle' a.id %}" class="btn btn-sm btn-outline-primary">Düzenle</a>
+                                            <a href="{% url 'ameliyat_sil' a.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Silinsin mi?')">Sil</a>
+                                        </div>
+                                    </div>
+                                </div>
                             {% endfor %}
-                        </ul>
+                        </div>
                     {% else %}
                         <p class="text-muted">Kayıt bulunamadı.</p>
                     {% endif %}
-                    <a href="#" class="btn btn-sm btn-outline-primary mt-2">Panelde Yönet</a>
+                    <a href="{% url 'ameliyat_ekle' hayvan.id %}" class="btn btn-sm btn-success mt-3">
+                        <i class="fas fa-plus me-1"></i> Yeni Ameliyat Ekle
+                    </a>
                 </div>
             </div>
         </div>
 
-        <!-- Beslenme -->
+        <!-- 🥣 Beslenme Kayıtları -->
         <div class="accordion-item">
-            <h2 class="accordion-header" id="beslenmeHeader">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#beslenmeCollapse">
-                    🥣 Beslenme Kayıtları
+            <h2 class="accordion-header" id="headingNutrition">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNutrition" aria-expanded="false">
+                    <i class="fas fa-utensils me-2 text-success"></i> Beslenme Kayıtları
                 </button>
             </h2>
-            <div id="beslenmeCollapse" class="accordion-collapse collapse" aria-labelledby="beslenmeHeader">
+            <div id="collapseNutrition" class="accordion-collapse collapse" aria-labelledby="headingNutrition">
                 <div class="accordion-body">
                     {% if hayvan.beslenme_kayitlari.exists %}
-                        <ul class="list-group">
+                        <div class="row">
                             {% for b in hayvan.beslenme_kayitlari.all %}
-                                <li class="list-group-item">
-                                    <strong>{{ b.besin_turu }}</strong> — {{ b.tarih }}<br>
-                                    Miktar: {{ b.miktar }}<br>
-                                    <small>{{ b.notlar|default:"-" }}</small>
-                                </li>
+                                <div class="col-md-6 mb-3">
+                                    <div class="pet-list-item p-3">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <strong class="text-success">{{ b.besin_turu }}</strong>
+                                            <small class="text-muted">{{ b.tarih|date:"d.m.Y" }}</small>
+                                        </div>
+                                        <p class="mb-1"><small>Miktar: {{ b.miktar }}</small></p>
+                                        <p class="mb-2">{{ b.notlar|default:"-" }}</p>
+                                        <div class="d-flex gap-2">
+                                            <a href="{% url 'beslenme_duzenle' b.id %}" class="btn btn-sm btn-outline-primary">Düzenle</a>
+                                            <a href="{% url 'beslenme_sil' b.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Silinsin mi?')">Sil</a>
+                                        </div>
+                                    </div>
+                                </div>
                             {% endfor %}
-                        </ul>
+                        </div>
                     {% else %}
                         <p class="text-muted">Beslenme kaydı yok.</p>
                     {% endif %}
-                    <a href="#" class="btn btn-sm btn-outline-primary mt-2">Panelde Yönet</a>
+                    <a href="{% url 'beslenme_ekle' hayvan.id %}" class="btn btn-sm btn-success mt-3">
+                        <i class="fas fa-plus me-1"></i> Yeni Beslenme Kaydı Ekle
+                    </a>
                 </div>
             </div>
         </div>
-
     </div>
-</div>
 
-<!-- Chart.js -->
-{% if hayvan.kilo_kayitlari.exists %}
+</div>
+{% endblock %}
+
+
+
+
+{% block js_dosyalar %}
+{% if kilo_kayitlari|length > 0 %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
-    const ctx = document.getElementById('kiloChart');
-    const chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: [{% for k in hayvan.kilo_kayitlari.all|dictsort:"tarih" %}'{{ k.tarih|date:"d M" }}',{% endfor %}],
-            datasets: [{
-                label: 'Kilo (kg)',
-                data: [{% for k in hayvan.kilo_kayitlari.all|dictsort:"tarih" %}{{ k.kilo }},{% endfor %}],
-                borderColor: 'rgb(75, 192, 192)',
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                tension: 0.3,
-                fill: true,
-            }]
-        },
-        options: {
-            scales: { y: { beginAtZero: false } },
-            responsive: true
-        }
-    });
+document.addEventListener('DOMContentLoaded', function () {
+    try {
+        const ctx = document.getElementById('kiloChart');
+        if (!ctx) return;
+
+        // ✅ View’den gelen JSON’u parse et
+        const rawData = JSON.parse('{{ kilo_data_json|escapejs }}');
+
+        const labels = rawData.map(item => item.tarih);
+        const data = rawData.map(item => parseFloat(item.kilo));
+
+        new Chart(ctx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Kilo (kg)',
+                    data: data,
+                    backgroundColor: 'rgba(24, 188, 156, 0.1)',
+                    borderColor: '#18bc9c',
+                    borderWidth: 2,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#2c3e50',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `Kilo: ${ctx.parsed.y} kg`
+                        }
+                    },
+                    legend: { display: false }
+                },
+                scales: {
+                    x: { title: { display: true, text: "Tarih" } },
+                    y: {
+                        beginAtZero: false,
+                        ticks: { callback: v => v + ' kg' }
+                    }
+                }
+            }
+        });
+    } catch (e) {
+        console.error("Grafik hatası:", e);
+    }
+});
 </script>
 {% endif %}
 {% endblock %}

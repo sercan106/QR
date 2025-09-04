@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'shop',  # e-ticaret uygulaması
     'widget_tweaks', # form düzenlemeleri için tasarım iöçin
     'petpanel',  # petpanel uygulaması
+    'etiket',  # etiket uygulaması
 
     # 'django_extensions',
     
@@ -49,8 +50,10 @@ INSTALLED_APPS = [
     
 ]
 
-# LOGIN_URL = '/giris/'  # Kullanıcı girişi yapılmamışsa yönlendirilecek URL
-# LOGIN_REDIRECT_URL = '/'  # Kullanıcı girişi yapıldıktan sonra yönlendirilecek URL
+
+LOGIN_URL = '/accaunt/login/'  # @login_required çalışsın diye
+# LOGIN_REDIRECT_URL = '/kullanici_paneli/'  # Giriş sonrası yönlendirme (dilersen değiştir)
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -151,3 +154,32 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media') #resim işlemleri için
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+
+
+# E-posta Ayarları (Gmail SMTP)
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = "sercan.20030@gmail.com"  # Senin Gmail adresin
+EMAIL_HOST_PASSWORD = "rsef uohy ijtj kpsp"     # 16 haneli uygulama şifresi
+
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+}

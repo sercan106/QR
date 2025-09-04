@@ -1,94 +1,635 @@
 {% extends 'ana.html' %}
 {% load static %}
-{% block baslik %}<title>PatiQuard</title>{% endblock baslik %}
+{% block baslik %}<title>PatiQuard - Evcil Hayvan Güvenliği</title>{% endblock baslik %}
 {% block css_dosyalar %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css"/>
+<style>
+    :root {
+        --primary-color: #4e73df;
+        --secondary-color: #f8f9fc;
+        --accent-color: #ff6b6b;
+        --dark-color: #2c3e50;
+        --light-color: #ffffff;
+    }
+    
+    body {
+        font-family: 'Poppins', sans-serif;
+        overflow-x: hidden;
+    }
+    
+    /* Hero Section */
+    .kahraman {
+        position: relative;
+        height: 100vh;
+        min-height: 600px;
+        background: linear-gradient(135deg, rgba(78, 115, 223, 0.8), rgba(46, 61, 119, 0.8)),
+                    url('https://images.unsplash.com/photo-1586671267731-da2cf3ceeb80?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') no-repeat center center/cover;
+        display: flex;
+        align-items: center;
+        color: white;
+        transition: background 0.5s ease-in-out;
+    }
+    
+    .kahraman-katman {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.3);
+        transition: background-color 0.5s ease-in-out;
+    }
+    
+    .kahraman-icerik {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+        padding: 0 20px;
+    }
+    
+    .kahraman-icerik h1 {
+        font-weight: 700;
+        font-size: 3.5rem;
+        margin-bottom: 1.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        transition: all 0.6s ease-in-out;
+    }
+    
+    .kahraman-icerik p {
+        font-size: 1.5rem;
+        margin-bottom: 2rem;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        transition: all 0.6s ease-in-out;
+    }
+    
+    .ozel-dugme {
+        background-color: var(--accent-color);
+        border: none;
+        border-radius: 50px;
+        padding: 12px 30px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        transition: all 0.4s ease-in-out;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        margin: 0 10px;
+    }
+    
+    .ozel-dugme:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        background-color: #ff5252;
+    }
+    
+    /* Services Section */
+    #hizmetler {
+        padding: 100px 0;
+        background-color: var(--secondary-color);
+        transition: background 0.5s ease-in-out;
+    }
+    
+    #hizmetler h2 {
+        font-weight: 700;
+        color: var(--dark-color);
+        margin-bottom: 60px;
+        position: relative;
+    }
+    
+    #hizmetler h2:after {
+        content: '';
+        position: absolute;
+        bottom: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 3px;
+        background-color: var(--accent-color);
+    }
+    
+    .kart-ozel {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        transition: all 0.5s ease-in-out;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        background-color: var(--light-color);
+    }
+    
+    .kart-ozel:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    }
+    
+    .kart-govde {
+        padding: 30px;
+    }
+    
+    .kart-govde i {
+        color: var(--primary-color);
+        transition: color 0.4s ease-in-out;
+    }
+    
+    .kart-govde h4 {
+        font-weight: 600;
+        margin: 20px 0;
+        color: var(--dark-color);
+    }
+    
+    .kart-govde p {
+        color: #666;
+        font-size: 0.95rem;
+    }
+    
+    /* About Section */
+    #hakkimizda {
+        padding: 100px 0;
+        background-color: var(--light-color);
+    }
+    
+    #hakkimizda h2 {
+        font-weight: 700;
+        color: var(--dark-color);
+        margin-bottom: 30px;
+    }
+    
+    #hakkimizda p {
+        color: #555;
+        line-height: 1.8;
+        margin-bottom: 30px;
+    }
+    
+    #hakkimizda img {
+        width: 100%;
+        height: auto;
+        object-fit: cover;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        transition: all 0.5s ease-in-out;
+    }
+    
+    #hakkimizda img:hover {
+        transform: scale(1.02);
+    }
+    
+    /* Reviews Section */
+    #yorumlar {
+        padding: 100px 0;
+        background-color: var(--secondary-color);
+    }
+    
+    #yorumlar h2 {
+        font-weight: 700;
+        color: var(--dark-color);
+        margin-bottom: 60px;
+        position: relative;
+    }
+    
+    #yorumlar h2:after {
+        content: '';
+        position: absolute;
+        bottom: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 3px;
+        background-color: var(--accent-color);
+    }
+    
+    .yorum-kart {
+        background-color: var(--light-color);
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        transition: all 0.5s ease-in-out;
+    }
+    
+    .yorum-kart:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .yorum-yildiz {
+        color: #f1c40f;
+        margin-bottom: 15px;
+    }
+    
+    /* Purchase Section */
+    #satin-al {
+        padding: 100px 0;
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        color: var(--light-color);
+        text-align: center;
+    }
+    
+    #satin-al h2 {
+        font-weight: 700;
+        margin-bottom: 30px;
+    }
+    
+    #satin-al p {
+        font-size: 1.2rem;
+        margin-bottom: 40px;
+    }
+    
+    /* Contact Section */
+    #iletisim {
+        padding: 100px 0;
+    }
+    
+    #iletisim h2 {
+        font-weight: 700;
+        color: var(--dark-color);
+        margin-bottom: 60px;
+        position: relative;
+    }
+    
+    #iletisim h2:after {
+        content: '';
+        position: absolute;
+        bottom: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 3px;
+        background-color: var(--accent-color);
+    }
+    
+    #iletisim form {
+        background-color: var(--light-color);
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+        transition: all 0.5s ease-in-out;
+    }
+    
+    #iletisim .form-control {
+        border-radius: 10px;
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        transition: all 0.4s ease-in-out;
+    }
+    
+    #iletisim .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
+    }
+    
+    #iletisim p {
+        font-size: 1.1rem;
+        margin-bottom: 20px;
+        color: #555;
+    }
+    
+    #iletisim i {
+        color: var(--primary-color);
+        margin-right: 10px;
+        width: 20px;
+        text-align: center;
+    }
+    
+    /* Responsive Adjustments */
+    @media (max-width: 992px) {
+        .kahraman-icerik h1 {
+            font-size: 2.8rem;
+        }
+        
+        .kahraman-icerik p {
+            font-size: 1.2rem;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .kahraman {
+            height: auto;
+            padding: 120px 0;
+        }
+        
+        .kahraman-icerik h1 {
+            font-size: 2.2rem;
+        }
+        
+        .kahraman-icerik p {
+            font-size: 1rem;
+        }
+        
+        .ozel-dugme {
+            display: block;
+            width: 80%;
+            margin: 10px auto;
+        }
+        
+        #hakkimizda .col-md-6 {
+            margin-bottom: 40px;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .kahraman-icerik h1 {
+            font-size: 1.8rem;
+        }
+        
+        #hizmetler, #hakkimizda, #yorumlar, #satin-al, #iletisim {
+            padding: 60px 0;
+        }
+        
+        #iletisim form {
+            padding: 20px;
+        }
+    }
+    
+    /* Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .animate-fadeInUp {
+        animation: fadeInUp 1.2s ease-in-out forwards;
+    }
+</style>
 {% endblock css_dosyalar %}
+
 {% block content %}
-<section id="anasayfa" class="kahraman mt-lg-5">
+<!-- Hero Section -->
+<section id="anasayfa" class="kahraman">
     <div class="kahraman-katman"></div>
     <div class="container kahraman-icerik">
-        <h1 class="display-4">PetSafe Hub'a Hoş Geldiniz</h1>
-        <p class="lead">Evcil hayvanlarınızı yenilikçi kimlik çözümleri ile koruyun.</p>
-        <a href="{% url 'tag' %}" class="mt-4 btn btn-lg btn-primary ozel-dugme mt-3">Bulunan Hayvanı Bildir</a>
-        <a href="{% url 'add_pet' %}" class="btn btn-lg btn-primary ozel-dugme mt-3">Yeni Etiket Aktive Et</a>
-    </div>
-</section>
-<section id="hizmetler" class="py-5 bg-light">
-    <div class="container">
-        <h2 class="text-center mb-5" data-aos="zoom-in">Hizmetlerimiz</h2>
-        <div class="row">
-            <div class="col-12 col-md-4 mb-4">
-                <div class="kart-ozel card h-100" data-aos="fade-up" data-aos-delay="100">
-                    <div class="kart-govde card-body text-center">
-                        <i class="fas fa-paw fa-3x mb-3 text-primary"></i>
-                        <h4 class="card-title">Evcil Hayvan Kimlik Etiketleri</h4>
-                        <p class="card-text">Özelleştirilebilir QR evcil hayvan etiketleri ve çevrimiçi profillerle hızlı geri kazanım.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-12 col-md-4 mb-4">
-                <div class="kart-ozel card h-100" data-aos="fade-up" data-aos-delay="200">
-                    <div class="kart-govde card-body text-center">
-                        <i class="fas fa-microchip fa-3x mb-3 text-primary"></i>
-                        <h4 class="card-title">Mikroçip Hizmetleri</h4>
-                        <p class="card-text">Güvenli ve uzun ömürlü mikroçip implantasyonu ile evcil hayvanınızı izleyin.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-12 col-md-4 mb-4">
-                <div class="kart-ozel card h-100" data-aos="fade-up" data-aos-delay="300">
-                    <div class="kart-govde card-body text-center">
-                        <i class="fas fa-shield-alt fa-3x mb-3 text-primary"></i>
-                        <h4 class="card-title">Kayıp/Kurtarma Desteği</h4>
-                        <p class="card-text">Evcil hayvanınızın kaybolması durumunda 7/24 destek ve kurtarma hizmetleri.</p>
-                    </div>
-                </div>
-            </div>
+        <h1 class="animate__animated animate__fadeInDown">PetSafe Hub'a Hoş Geldiniz</h1>
+        <p class="animate__animated animate__fadeIn animate__delay-1s">Evcil hayvanlarınızı yenilikçi kimlik çözümleri ile koruyun.</p>
+        <div class="d-flex flex-wrap justify-content-center animate__animated animate__fadeInUp animate__delay-2s">
+            <a href="{% url 'etiket:lookup' %}" class="btn btn-lg btn-primary ozel-dugme">Bulunan Hayvanı Bildir</a>
+            <a href="{% url 'add_pet' %}" class="btn btn-lg btn-primary ozel-dugme">Yeni Etiket Aktive Et</a>
         </div>
     </div>
 </section>
-<section id="hakkimizda" class="py-5">
+
+<!-- Services Section -->
+<section id="hizmetler" class="py-5 bg-light">
+  <div class="container">
+    <h2 class="text-center mb-5" data-aos="fade-down">Hizmetlerimiz</h2>
+    <div class="row g-4">
+
+      <!-- QR Kimlik Etiketi -->
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="kart-ozel card h-100 shadow-sm" data-aos="fade-up" data-aos-delay="100">
+          <div class="kart-govde card-body text-center">
+            <i class="fas fa-paw fa-3x mb-3 text-primary"></i>
+            <h4 class="card-title">Dijital Kimlik Etiketi</h4>
+            <p class="card-text">Her hayvana özel QR kodlu etiket ile kaybolan dostunuz size hızla geri döner.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mikroçip Entegrasyonu -->
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="kart-ozel card h-100 shadow-sm" data-aos="fade-up" data-aos-delay="200">
+          <div class="kart-govde card-body text-center">
+            <i class="fas fa-microchip fa-3x mb-3 text-success"></i>
+            <h4 class="card-title">Mikroçip Entegrasyonu</h4>
+            <p class="card-text">Kimlik takibi ve veteriner eşleştirmesi için mikroçip ile tam uyumlu sistem.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kayıp Takibi -->
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="kart-ozel card h-100 shadow-sm" data-aos="fade-up" data-aos-delay="300">
+          <div class="kart-govde card-body text-center">
+            <i class="fas fa-shield-alt fa-3x mb-3 text-danger"></i>
+            <h4 class="card-title">Kayıp/Kurtarma Desteği</h4>
+            <p class="card-text">Etiket taraması ile iletişim bilgileri görünür, acil durumlar için otomatik log tutulur.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sağlık Takibi -->
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="kart-ozel card h-100 shadow-sm" data-aos="fade-up" data-aos-delay="400">
+          <div class="kart-govde card-body text-center">
+            <i class="fas fa-notes-medical fa-3x mb-3 text-info"></i>
+            <h4 class="card-title">Sağlık ve Aşı Takibi</h4>
+            <p class="card-text">Aşılar, alerjiler, ilaçlar ve ameliyat geçmişi sistemde güvende tutulur.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kilo & Beslenme -->
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="kart-ozel card h-100 shadow-sm" data-aos="fade-up" data-aos-delay="500">
+          <div class="kart-govde card-body text-center">
+            <i class="fas fa-chart-line fa-3x mb-3 text-warning"></i>
+            <h4 class="card-title">Kilo ve Beslenme Grafikleri</h4>
+            <p class="card-text">Kilo değişimlerini görselleştir, beslenme düzenini takip et.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mağaza Entegrasyonu -->
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="kart-ozel card h-100 shadow-sm" data-aos="fade-up" data-aos-delay="600">
+          <div class="kart-govde card-body text-center">
+            <i class="fas fa-store fa-3x mb-3 text-dark"></i>
+            <h4 class="card-title">Evcil Mağaza</h4>
+            <p class="card-text">Türe özel önerilerle vitamin, mama ve oyuncaklara kolayca ulaşın.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+
+<!-- About Section -->
+<section id="hakkimizda" class="py-5 bg-light">
     <div class="container">
         <div class="row align-items-center">
-            <div class="col-12 col-md-6 mb-4 mb-md-0" data-aos="fade-right">
-                <img src="https://images.unsplash.com/photo-1552053831-0d293e4e581d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Hakkımızda" class="img-fluid rounded shadow-lg">
+            <div class="col-12 col-lg-6 mb-4 mb-lg-0" data-aos="fade-right">
+                <img src="https://images.unsplash.com/photo-1552053831-0d293e4e581d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80" alt="Hakkımızda" class="img-fluid rounded shadow-lg">
             </div>
-            <div class="col-12 col-md-6" data-aos="fade-left">
+            <div class="col-12 col-lg-6" data-aos="fade-left">
                 <h2 class="mb-4">Hakkımızda</h2>
+                <p class="lead">Evcil hayvanlarınızın güvenliği bizim önceliğimizdir.</p>
                 <p>PetSafe Hub, evcil hayvan sahiplerine en iyi koruma ve kimlik çözümleri sunmak için 2010 yılında kurulmuştur. Misyonumuz, her evcil hayvanın güvenli ve mutlu bir yaşam sürmesini sağlamaktır.</p>
-                <a href="#hakkimizda" class="btn btn-outline-primary mt-3" data-aos="zoom-in">Daha Fazla Bilgi</a>
+                <p>Uzman ekibimiz ve yenilikçi teknolojilerimizle, evcil hayvanınızın kaybolması durumunda hızlı ve etkili çözümler sunuyoruz.</p>
+                <a href="#iletisim" class="btn btn-primary ozel-dugme mt-3" data-aos="zoom-in">İletişime Geçin</a>
             </div>
         </div>
     </div>
 </section>
-<section id="iletisim" class="py-5 bg-light">
+
+<!-- Reviews Section -->
+<section id="yorumlar" class="py-5">
     <div class="container">
-        <h2 class="text-center mb-5" data-aos="zoom-in">Bize Ulaşın</h2>
+        <h2 class="text-center mb-5" data-aos="fade-down">Müşteri Yorumları</h2>
         <div class="row">
-            <div class="col-12 col-md-6 mb-4 mb-md-0" data-aos="fade-up">
-                <form method="post" action="#">
+            <div class="col-12 col-md-4 mb-4">
+                <div class="yorum-kart" data-aos="fade-up" data-aos-delay="100">
+                    <div class="yorum-yildiz">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p>"PetSafe Hub sayesinde köpeğim kaybolduğunda hemen bulundu! QR etiket sistemi harika!"</p>
+                    <p class="fw-bold">Ayşe K. - İstanbul</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-4 mb-4">
+                <div class="yorum-kart" data-aos="fade-up" data-aos-delay="200">
+                    <div class="yorum-yildiz">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p>"Mikroçip hizmeti çok güvenilir. Ekibin 7/24 desteği inanılmaz!"</p>
+                    <p class="fw-bold">Mehmet Y. - Ankara</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-4 mb-4">
+                <div class="yorum-kart" data-aos="fade-up" data-aos-delay="300">
+                    <div class="yorum-yildiz">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p>"Kedim için aldığım etiket hem şık hem de çok kullanışlı. Kesinlikle tavsiye ederim!"</p>
+                    <p class="fw-bold">Zeynep A. - İzmir</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Purchase Section -->
+<section id="satin-al" class="py-5">
+    <div class="container">
+        <h2 data-aos="fade-down">Evcil Hayvanınızı Şimdi Koruyun!</h2>
+        <p data-aos="fade-up">Yenilikçi QR etiketlerimiz ve mikroçip hizmetlerimizle evcil hayvanınızın güvenliğini garantileyin.</p>
+        <a href="{% url 'add_pet' %}" class="btn btn-lg btn-light ozel-dugme" data-aos="zoom-in">Hemen Satın Al</a>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section id="iletisim" class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5" data-aos="fade-down">Bize Ulaşın</h2>
+        <div class="row">
+            <div class="col-12 col-lg-6 mb-5 mb-lg-0" data-aos="fade-right">
+                <form method="post" action="#" class="animate__animated animate__fadeIn">
                     {% csrf_token %}
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label for="ad" class="form-label">Adınız</label>
-                        <input type="text" class="form-control" id="ad" name="ad" required>
+                        <input type="text" class="form-control form-control-lg" id="ad" name="ad" required>
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label for="eposta" class="form-label">E-posta</label>
-                        <input type="email" class="form-control" id="eposta" name="eposta" required>
+                        <input type="email" class="form-control form-control-lg" id="eposta" name="eposta" required>
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label for="mesaj" class="form-label">Mesajınız</label>
-                        <textarea class="form-control" id="mesaj" name="mesaj" rows="4" required></textarea>
+                        <textarea class="form-control" id="mesaj" name="mesaj" rows="5" required></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary ozel-dugme" data-aos="zoom-in">Gönder</button>
+                    <button type="submit" class="btn btn-primary ozel-dugme btn-lg w-100">Gönder</button>
                 </form>
             </div>
-            <div class="col-12 col-md-6" data-aos="fade-up" data-aos-delay="200">
-                <p><i class="fas fa-map-marker-alt"></i> 123 Evcil Hayvan Sokak, İstanbul, Türkiye</p>
-                <p><i class="fas fa-phone"></i> +90 212 345 67 89</p>
-                <p><i class="fas fa-envelope"></i> info@petsafehub.com</p>
+            <div class="col-12 col-lg-6" data-aos="fade-left">
+                <div class="bg-white p-4 rounded shadow-sm h-100">
+                    <h4 class="mb-4">İletişim Bilgileri</h4>
+                    <div class="d-flex align-items-start mb-4">
+                        <i class="fas fa-map-marker-alt mt-1 me-3"></i>
+                        <div>
+                            <h5>Adres</h5>
+                            <p class="mb-0">123 Evcil Hayvan Sokak, İstanbul, Türkiye</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start mb-4">
+                        <i class="fas fa-phone mt-1 me-3"></i>
+                        <div>
+                            <h5>Telefon</h5>
+                            <p class="mb-0">+90 212 345 67 89</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start mb-4">
+                        <i class="fas fa-envelope mt-1 me-3"></i>
+                        <div>
+                            <h5>E-posta</h5>
+                            <p class="mb-0">info@petsafehub.com</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start">
+                        <i class="fas fa-clock mt-1 me-3"></i>
+                        <div>
+                            <h5>Çalışma Saatleri</h5>
+                            <p class="mb-0">Pazartesi - Cuma: 09:00 - 18:00</p>
+                            <p class="mb-0">Cumartesi: 10:00 - 15:00</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </section>
+
+<!-- Back to Top Button -->
+<a href="#" class="btn btn-primary btn-lg back-to-top" role="button" data-aos="fade-up" data-aos-offset="0">
+    <i class="fas fa-arrow-up"></i>
+</a>
+
 {% endblock %}
+
+{% block js_dosyalar %}
+<script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script>
+    // Initialize AOS animation library
+    AOS.init({
+        duration: 1000,
+        easing: 'ease-in-out',
+        once: true,
+        offset: 100
+    });
+    
+    // Back to top button
+    $(window).scroll(function() {
+        if ($(this).scrollTop() > 300) {
+            $('.back-to-top').fadeIn('slow');
+        } else {
+            $('.back-to-top').fadeOut('slow');
+        }
+    });
+    
+    $('.back-to-top').click(function(e) {
+        e.preventDefault();
+        $('html, body').animate({scrollTop: 0}, 1000);
+        return false;
+    });
+    
+    // Smooth scrolling for anchor links
+    $('a[href*="#"]').not('[href="#"]').not('[href="#0"]').click(function(event) {
+        if (location.pathname.replace(/^\//, '') == this.pathname.replace(/^\//, '') 
+            && location.hostname == this.hostname) {
+            var target = $(this.hash);
+            target = target.length ? target : $('[name=' + this.hash.slice(1) + ']');
+            if (target.length) {
+                event.preventDefault();
+                $('html, body').animate({
+                    scrollTop: target.offset().top - 80
+                }, 1200, 'easeInOutExpo');
+                return false;
+            }
+        }
+    });
+</script>
+{% endblock js_dosyalar %}

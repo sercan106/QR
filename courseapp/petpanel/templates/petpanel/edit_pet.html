@@ -1,0 +1,30 @@
+{% extends "ana.html" %}
+{% load static %}
+
+{% block baslik %}Pet Bilgilerini Düzenle | PetSafe Hub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4"><i class="fas fa-edit me-2"></i> {{ pet.ad }} için Bilgileri Düzenle</h1>
+    <form method="post" enctype="multipart/form-data" class="card p-4 shadow-sm">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        {% for field in form %}
+            <div class="mb-3">
+                <label class="form-label">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                    <div class="form-text">{{ field.help_text }}</div>
+                {% endif %}
+                {% if field.errors %}
+                    <div class="text-danger small">{{ field.errors }}</div>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i> Kaydet</button>
+        <a href="{% url 'pet_detail' pet.id %}" class="btn btn-secondary ms-2">İptal</a>
+    </form>
+</div>
+{% endblock %}

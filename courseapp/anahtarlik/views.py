@@ -44,7 +44,8 @@ def hayvan_pdf_indir(request, pet_id):
     return response
 
 
-
+import json
+from django.core.serializers.json import DjangoJSONEncoder
 
 @login_required
 def pet_detail(request, pet_id):
@@ -56,71 +57,28 @@ def pet_detail(request, pet_id):
     ameliyat_kayitlari = evcil_hayvan.ameliyat_kayitlari.all().order_by('-tarih')
     alerjiler = evcil_hayvan.alerjiler.all().order_by('-kaydedilme_tarihi')
     beslenme_kayitlari = evcil_hayvan.beslenme_kayitlari.all().order_by('-tarih')
-    kilo_kayitlari = evcil_hayvan.kilo_kayitlari.all().order_by('-tarih')
+    kilo_kayitlari = evcil_hayvan.kilo_kayitlari.all().order_by('tarih')
 
-    kayit_gruplari = [
-        ("Aşı Takvimi", asi_takvimi, 'asi_takvimi_ekle', "🩺"),
-        ("Sağlık Kayıtları", saglik_kayitlari, 'saglik_kaydi_ekle', "💉"),
-        ("İlaç Kayıtları", ilac_kayitlari, 'ilac_kaydi_ekle', "💊"),
-        ("Ameliyatlar", ameliyat_kayitlari, 'ameliyat_kaydi_ekle', "🏥"),
-        ("Alerjiler", alerjiler, 'alerji_ekle', "⚠️"),
-        ("Beslenme", beslenme_kayitlari, 'beslenme_kaydi_ekle', "🍗"),
-        ("Kilo Takibi", kilo_kayitlari, 'kilo_kaydi_ekle', "⚖️"),
-    ]
+    # ✅ JSON’a çevir
+    kilo_data = list(kilo_kayitlari.values("tarih", "kilo"))
+    kilo_data_json = json.dumps(kilo_data, cls=DjangoJSONEncoder)
 
     context = {
         'hayvan': evcil_hayvan,
-        'kayit_gruplari': kayit_gruplari,
+        'asi_takvimi': asi_takvimi,
+        'saglik_kayitlari': saglik_kayitlari,
+        'ilac_kayitlari': ilac_kayitlari,
+        'ameliyat_kayitlari': ameliyat_kayitlari,
+        'alerjiler': alerjiler,
+        'beslenme_kayitlari': beslenme_kayitlari,
+        'kilo_kayitlari': kilo_kayitlari,
+        'kilo_data_json': kilo_data_json,   # ✅ Template’e JSON gönderiyoruz
     }
     return render(request, 'anahtarlik/pet_detail.html', context)
 
 
-
-
-
-
 def ev(request):
     return render(request, 'anahtarlik/ev.html')
-
-def tag(request):
-    if request.method == 'POST':
-        seri_numarasi = request.POST.get('seri_numarasi')
-        try:
-            etiket = Etiket.objects.get(seri_numarasi=seri_numarasi)
-            if etiket.aktif:
-                return redirect('etiket_goruntule', etiket_id=etiket.etiket_id)
-            else:
-                messages.error(request, 'Bu etiket henüz aktif değil!')
-        except Etiket.DoesNotExist:
-            messages.error(request, 'Geçersiz seri numarası!')
-    return render(request, 'anahtarlik/tag.html')
-
-def etiket_goruntule(request, etiket_id):
-    etiket = get_object_or_404(Etiket, etiket_id=etiket_id)
-    if not etiket.aktif:
-        messages.error(request, 'Bu etiket aktif değil!')
-        return redirect('ev')
-
-    evcil_hayvan = etiket.evcil_hayvan
-    sahip = evcil_hayvan.sahip
-
-    if request.method == 'POST':
-        mesaj = request.POST.get('mesaj')
-        gonderen_ad = request.POST.get('gonderen_ad')
-        send_mail(
-            'Evcil Hayvanınız Bulundu!',
-            f'{gonderen_ad} adlı kişi evcil hayvanınızı bulduğunu bildirdi:\n\n{mesaj}',
-            'info@petsafehub.com',
-            [sahip.kullanici.email],
-            fail_silently=False,
-        )
-        messages.success(request, 'Mesaj sahibine gönderildi!')
-
-    return render(request, 'anahtarlik/etiket_goruntule.html', {
-        'etiket': etiket,
-        'evcil_hayvan': evcil_hayvan,
-        'sahip': sahip
-    })
 
 @login_required
 def kullanici_paneli(request):
@@ -200,41 +158,20 @@ def kayip_bildir(request, evcil_hayvan_id):
         return redirect('kullanici_paneli')
     return render(request, 'anahtarlik/kayip_bildir.html', {'evcil_hayvan': evcil_hayvan})
 
-@login_required
-def saglik_kaydi_ekle(request, evcil_hayvan_id):
-    evcil_hayvan = get_object_or_404(EvcilHayvan, id=evcil_hayvan_id, sahip__kullanici=request.user)
-    if request.method == 'POST':
-        asi_turu = request.POST.get('asi_turu')
-        asi_tarihi = request.POST.get('asi_tarihi')
-        notlar = request.POST.get('notlar')
-        SaglikKaydi.objects.create(
-            evcil_hayvan=evcil_hayvan,
-            asi_turu=asi_turu,
-            asi_tarihi=asi_tarihi,
-            notlar=notlar
-        )
-        messages.success(request, 'Sağlık kaydı eklendi!')
-        return redirect('kullanici_paneli')
-    return render(request, 'anahtarlik/saglik_kaydi_ekle.html', {'evcil_hayvan': evcil_hayvan})
+def hayvan_bulundu(request, evcil_hayvan_id):
+    hayvan = get_object_or_404(EvcilHayvan, id=evcil_hayvan_id)
+    
+    if hayvan.kayip_durumu:
+        hayvan.kayip_durumu = False
+        hayvan.kayip_bildirim_tarihi = None
+        hayvan.save()
+        messages.success(request, f"{hayvan.ad} artık güvende olarak işaretlendi.")
+    else:
+        messages.info(request, f"{hayvan.ad} zaten kayıp değil.")
+    
+    return redirect("pet_detail", pet_id=hayvan.id)
 
-@login_required
-def beslenme_kaydi_ekle(request, evcil_hayvan_id):
-    evcil_hayvan = get_object_or_404(EvcilHayvan, id=evcil_hayvan_id, sahip__kullanici=request.user)
-    if request.method == 'POST':
-        besin_turu = request.POST.get('besin_turu')
-        tarih = request.POST.get('tarih')
-        miktar = request.POST.get('miktar')
-        notlar = request.POST.get('notlar')
-        BeslenmeKaydi.objects.create(
-            evcil_hayvan=evcil_hayvan,
-            besin_turu=besin_turu,
-            tarih=tarih,
-            miktar=miktar,
-            notlar=notlar
-        )
-        messages.success(request, 'Beslenme kaydı eklendi!')
-        return redirect('kullanici_paneli')
-    return render(request, 'anahtarlik/beslenme_kaydi_ekle.html', {'evcil_hayvan': evcil_hayvan})
+
 
 @login_required
 def edit_pet(request, pet_id):
@@ -258,95 +195,3 @@ def delete_pet(request, pet_id):
         return redirect('kullanici_paneli')
     return render(request, 'anahtarlik/delete_confirm.html', {'hayvan': hayvan})
 
-@login_required
-def alerji_ekle(request, evcil_hayvan_id):
-    evcil_hayvan = get_object_or_404(EvcilHayvan, id=evcil_hayvan_id, sahip__kullanici=request.user)
-    if request.method == 'POST':
-        alerji_turu = request.POST.get('alerji_turu')
-        aciklama = request.POST.get('aciklama')
-        Alerji.objects.create(
-            evcil_hayvan=evcil_hayvan,
-            alerji_turu=alerji_turu,
-            aciklama=aciklama
-        )
-        messages.success(request, 'Alerji kaydı eklendi!')
-        return redirect('kullanici_paneli')
-    return render(request, 'anahtarlik/alerji_ekle.html', {'evcil_hayvan': evcil_hayvan})
-
-@login_required
-def asi_takvimi_ekle(request, evcil_hayvan_id):
-    evcil_hayvan = get_object_or_404(EvcilHayvan, id=evcil_hayvan_id, sahip__kullanici=request.user)
-    if request.method == 'POST':
-        asi_turu = request.POST.get('asi_turu')
-        planlanan_tarih = request.POST.get('planlanan_tarih')
-        tamamlandi = request.POST.get('tamamlandi') == 'on'
-        tamamlanma_tarihi = request.POST.get('tamamlanma_tarihi') if tamamlandi else None
-        notlar = request.POST.get('notlar')
-        AsiTakvimi.objects.create(
-            evcil_hayvan=evcil_hayvan,
-            asi_turu=asi_turu,
-            planlanan_tarih=planlanan_tarih,
-            tamamlandi=tamamlandi,
-            tamamlanma_tarihi=tamamlanma_tarihi,
-            notlar=notlar
-        )
-        messages.success(request, 'Aşı takvimi kaydı eklendi!')
-        return redirect('kullanici_paneli')
-    return render(request, 'anahtarlik/asi_takvimi_ekle.html', {'evcil_hayvan': evcil_hayvan})
-
-@login_required
-def ilac_kaydi_ekle(request, evcil_hayvan_id):
-    evcil_hayvan = get_object_or_404(EvcilHayvan, id=evcil_hayvan_id, sahip__kullanici=request.user)
-    if request.method == 'POST':
-        ilac_adi = request.POST.get('ilac_adi')
-        baslangic_tarihi = request.POST.get('baslangic_tarihi')
-        bitis_tarihi = request.POST.get('bitis_tarihi')
-        dozaj = request.POST.get('dozaj')
-        notlar = request.POST.get('notlar')
-        IlacKaydi.objects.create(
-            evcil_hayvan=evcil_hayvan,
-            ilac_adi=ilac_adi,
-            baslangic_tarihi=baslangic_tarihi,
-            bitis_tarihi=bitis_tarihi,
-            dozaj=dozaj,
-            notlar=notlar
-        )
-        messages.success(request, 'İlaç kaydı eklendi!')
-        return redirect('kullanici_paneli')
-    return render(request, 'anahtarlik/ilac_kaydi_ekle.html', {'evcil_hayvan': evcil_hayvan})
-
-@login_required
-def ameliyat_kaydi_ekle(request, evcil_hayvan_id):
-    evcil_hayvan = get_object_or_404(EvcilHayvan, id=evcil_hayvan_id, sahip__kullanici=request.user)
-    if request.method == 'POST':
-        ameliyat_turu = request.POST.get('ameliyat_turu')
-        tarih = request.POST.get('tarih')
-        veteriner = request.POST.get('veteriner')
-        notlar = request.POST.get('notlar')
-        AmeliyatKaydi.objects.create(
-            evcil_hayvan=evcil_hayvan,
-            ameliyat_turu=ameliyat_turu,
-            tarih=tarih,
-            veteriner=veteriner,
-            notlar=notlar
-        )
-        messages.success(request, 'Ameliyat kaydı eklendi!')
-        return redirect('kullanici_paneli')
-    return render(request, 'anahtarlik/ameliyat_kaydi_ekle.html', {'evcil_hayvan': evcil_hayvan})
-
-@login_required
-def kilo_kaydi_ekle(request, evcil_hayvan_id):
-    evcil_hayvan = get_object_or_404(EvcilHayvan, id=evcil_hayvan_id, sahip__kullanici=request.user)
-    if request.method == 'POST':
-        kilo = request.POST.get('kilo')
-        tarih = request.POST.get('tarih')
-        notlar = request.POST.get('notlar')
-        KiloKaydi.objects.create(
-            evcil_hayvan=evcil_hayvan,
-            kilo=kilo,
-            tarih=tarih,
-            notlar=notlar
-        )
-        messages.success(request, 'Kilo kaydı eklendi!')
-        return redirect('kullanici_paneli')
-    return render(request, 'anahtarlik/kilo_kaydi_ekle.html', {'evcil_hayvan': evcil_hayvan})

@@ -100,7 +100,7 @@ def user_login(request):
         user = authenticate(request, username=username, password=password)
         if user:
             login(request, user)
-            return redirect('ev')
+            return redirect('kullanici_paneli')
         else:
             messages.error(request, 'Geçersiz kullanıcı adı veya şifre.')
             return render(request, 'accaunt/login.html')

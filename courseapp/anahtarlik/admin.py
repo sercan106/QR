@@ -1,5 +1,9 @@
 # anahtarlik/admin.py
-
+import qrcode
+import qrcode
+from io import BytesIO
+import base64
+from django.utils.html import format_html
 from django.contrib import admin
 from django.utils.html import format_html
 from .models import (
@@ -90,19 +94,37 @@ class EvcilHayvanAdmin(admin.ModelAdmin):
     resim_preview.short_description = 'Resim Önizleme'
 
 # Etiket Admin
+
 @admin.register(Etiket)
 class EtiketAdmin(admin.ModelAdmin):
     list_display = ('seri_numarasi', 'evcil_hayvan', 'aktif', 'qr_kod_url_link', 'olusturulma_tarihi')
-    search_fields = ('seri_numarasi', 'evcil_hayvan__ad')
+    readonly_fields = ('etiket_id', 'qr_gorsel_onizleme', 'qr_kod_url')
+    search_fields = ('seri_numarasi',)
     list_filter = ('aktif', 'kilitli')
-    readonly_fields = ('etiket_id', 'olusturulma_tarihi')
 
     def qr_kod_url_link(self, obj):
         if obj.qr_kod_url:
-            return format_html('<a href="{}" target="_blank">QR Kod Linki</a>', obj.qr_kod_url)
-        return 'Yok'
-    qr_kod_url_link.short_description = 'QR Kod URL'
+            return format_html('<a href="{}" target="_blank">QR Link</a>', obj.qr_kod_url)
+        return "Yok"
+    qr_kod_url_link.short_description = "QR Kod URL"
 
+    def qr_gorsel_onizleme(self, obj):
+        if not obj.qr_kod_url:
+            return "Henüz QR URL oluşturulmamış."
+
+        # QR kod üret
+        qr = qrcode.make(obj.qr_kod_url)
+        buffer = BytesIO()
+        qr.save(buffer, format="PNG")
+        image_data = buffer.getvalue()
+        base64_image = base64.b64encode(image_data).decode()
+
+        # Base64 image HTML
+        img_html = f'<img src="data:image/png;base64,{base64_image}" width="200" height="200" /><br>'
+        download_link = f'<a download="qr_{obj.seri_numarasi}.png" href="data:image/png;base64,{base64_image}" class="button btn btn-sm btn-success mt-2">İndir</a>'
+
+        return format_html(img_html + download_link)
+    qr_gorsel_onizleme.short_description = "QR Önizleme & İndir"
 # Diğer Modeller (Basit register)
 @admin.register(Alerji)
 class AlerjiAdmin(admin.ModelAdmin):
