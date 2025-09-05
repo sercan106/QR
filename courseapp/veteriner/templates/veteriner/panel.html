@@ -1,0 +1,107 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <title>Veteriner Paneli</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light p-3">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3 class="mb-0">Merhaba, {{ vet.ad|default:request.user.username }}</h3>
+      <a href="{% url 'veteriner:veteriner_profil_tamamla' %}" class="btn btn-outline-secondary btn-sm">Profili Düzenle</a>
+    </div>
+
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h5 class="card-title">Tahsis Sayısı</h5>
+            <p class="display-6 mb-0">{{ tahsis_sayisi }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h5 class="card-title">Satış Sayısı</h5>
+            <p class="display-6 mb-0">{{ satis_sayisi }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-header"><strong>Tahsis Edilen Etiketler</strong></div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table mb-0 table-sm table-striped">
+                <thead>
+                  <tr>
+                    <th>Seri No</th>
+                    <th>Tahsis</th>
+                    <th>Aktif mi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for e in tahsis_edilenler %}
+                  <tr>
+                    <td>{{ e.seri_numarasi }}</td>
+                    <td>{{ e.tahsis_tarihi|date:"d.m.Y H:i" }}</td>
+                    <td>{% if e.aktif %}Evet{% else %}Hayır{% endif %}</td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="3" class="text-muted p-3">Kayıt yok.</td></tr>
+                {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-header"><strong>Satılan / Aktive Edilen Etiketler</strong></div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table mb-0 table-sm table-striped">
+                <thead>
+                  <tr>
+                    <th>Seri No</th>
+                    <th>İlk Aktivasyon</th>
+                    <th>Son Aktifleşme</th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for e in satilanlar %}
+                  <tr>
+                    <td>{{ e.seri_numarasi }}</td>
+                    <td>{{ e.first_activated_at|date:"d.m.Y H:i" }}</td>
+                    <td>{{ e.aktiflestirme_tarihi|date:"d.m.Y H:i" }}</td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="3" class="text-muted p-3">Kayıt yok.</td></tr>
+                {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    {% if messages %}
+      <div class="mt-3">
+        {% for m in messages %}
+          <div class="alert alert-{{ m.tags|default:'info' }}">{{ m }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+</body>
+</html>

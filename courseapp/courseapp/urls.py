@@ -10,7 +10,11 @@ urlpatterns = [
     path('accaunt/', include('accaunt.urls')),
     path('shop/', include('shop.urls')),
     path('tag/', include('etiket.urls', namespace='etiket')),  # ✅ Etiket app'ini dahil ettik
-    path('petpanel/', include('petpanel.urls')),  # ekli olmalı
+    path('petpanel/', include('petpanel.urls')),  # ekli olmalı 
+  
+    path("veteriner/", include(("veteriner.urls", "veteriner"), namespace="veteriner")),
+     path("petshop/", include(("petshop.urls", "petshop"), namespace="petshop")),
+
 ]
 
 # Medya ve statik dosyalar

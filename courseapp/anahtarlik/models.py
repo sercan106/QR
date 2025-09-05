@@ -1,10 +1,236 @@
 # anahtarlik/models.py
 
-
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
-from django.contrib.auth.models import User
-import uuid
+from django.urls import reverse
 from django.utils import timezone
+from django.contrib.auth.models import User
+from django.db.models import F
+import uuid
+
+
+# --- Kanal sabitleri (modül düzeyi!) ---
+KANAL_ONLINE = 'ONLINE'
+KANAL_VET = 'VET'
+KANAL_SHOP = 'SHOP'
+KANAL_SECENEKLERI = [
+    (KANAL_ONLINE, 'Online'),
+    (KANAL_VET, 'Veteriner'),
+    (KANAL_SHOP, 'Petshop'),
+]
+
+
+class Etiket(models.Model):
+    etiket_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    seri_numarasi = models.CharField(max_length=50, unique=True)
+    evcil_hayvan = models.OneToOneField('EvcilHayvan', on_delete=models.CASCADE, null=True, blank=True)
+
+    qr_kod_url = models.URLField(blank=True)
+    aktif = models.BooleanField(default=False)
+    olusturulma_tarihi = models.DateTimeField(auto_now_add=True)
+    kilitli = models.BooleanField(default=False)
+
+    # --- Satış kanalı ve partnerler ---
+    kanal = models.CharField(max_length=10, choices=KANAL_SECENEKLERI) # <<< BURAYI DEĞİŞTİRDİM!
+    satici_veteriner = models.ForeignKey(
+        'veteriner.Veteriner', null=True, blank=True, on_delete=models.SET_NULL, related_name='sattigi_etiketler'
+    )
+    satici_petshop = models.ForeignKey(
+        'petshop.Petshop', null=True, blank=True, on_delete=models.SET_NULL, related_name='sattigi_etiketler'
+    )
+    tahsis_tarihi = models.DateTimeField(null=True, blank=True)
+
+    # --- Aktivasyon / satış bilgileri ---
+    first_activated_at = models.DateTimeField(null=True, blank=True)
+    aktiflestiren = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='aktiflestirdigi_etiketler'
+    )
+    aktiflestirme_tarihi = models.DateTimeField(null=True, blank=True)
+
+    # Etiket kaç kere pasiften aktife geçti? (sadece False→True)
+    aktivasyon_sayisi = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        constraints = [
+            # VET ise veteriner zorunlu
+            models.CheckConstraint(
+                name='etiket_vet_icin_veteriner_zorunlu',
+                check=(models.Q(kanal__isnull=True) | ~models.Q(kanal=KANAL_VET) | models.Q(satici_veteriner__isnull=False))
+            ),
+            # SHOP ise petshop zorunlu
+            models.CheckConstraint(
+                name='etiket_shop_icin_petshop_zorunlu',
+                check=(models.Q(kanal__isnull=True) | ~models.Q(kanal=KANAL_SHOP) | models.Q(satici_petshop__isnull=False))
+            ),
+            # ONLINE ise partnerler boş olmalı
+            models.CheckConstraint(
+                name='etiket_online_icin_partner_bos',
+                check=(models.Q(kanal__isnull=True) | ~models.Q(kanal=KANAL_ONLINE) |
+                         (models.Q(satici_veteriner__isnull=True) & models.Q(satici_petshop__isnull=True)))
+            ),
+        ]
+
+    def __str__(self):
+        return f"Etiket {self.seri_numarasi} - {self.evcil_hayvan.ad if self.evcil_hayvan else 'Tanımlanmamış'}"
+
+    # --- Yardımcılar ---
+    def _build_qr_url(self) -> str:
+        try:
+            path = reverse('etiket:public', kwargs={'etiket_id': self.etiket_id})
+        except Exception:
+            path = f"/tag/{self.etiket_id}/"
+        site = getattr(settings, 'SITE_URL', 'http://127.0.0.1:8000')
+        return f"{site}{path}"
+
+    def clean(self):
+        # partner-kanal tutarlılığı
+        if self.kanal == KANAL_VET and not self.satici_veteriner:
+            raise ValidationError("Veteriner kanalı için veteriner seçilmelidir.")
+        if self.kanal == KANAL_SHOP and not self.satici_petshop:
+            raise ValidationError("Petshop kanalı için petshop seçilmelidir.")
+        if self.kanal == KANAL_ONLINE and (self.satici_veteriner or self.satici_petshop):
+            raise ValidationError("Online kanalda veteriner/petshop seçmeyin.")
+        
+        # Tahsis yapıldıysa taşıma yasak
+        if self.pk:
+            prev = Etiket.objects.get(pk=self.pk)
+            if prev.tahsis_tarihi:
+                if (prev.kanal != self.kanal or
+                    prev.satici_veteriner_id != self.satici_veteriner_id or
+                    prev.satici_petshop_id != self.satici_petshop_id):
+                    raise ValidationError("Bu etiket tahsis edilmiş. Tahsis değiştirilemez.")
+
+    def save(self, *args, **kwargs):
+        is_new_object = not self.pk
+        prev_data = None
+        if not is_new_object:
+            prev_data = Etiket.objects.filter(pk=self.pk).only(
+                'aktif', 'first_activated_at',
+                'satici_veteriner_id', 'satici_petshop_id', 'kanal',
+                'tahsis_tarihi'
+            ).first()
+
+        super().save(*args, **kwargs)
+
+        # QR URL oluşturma (bir kereye mahsus)
+        if not self.qr_kod_url:
+            self.qr_kod_url = self._build_qr_url()
+            self.save(update_fields=['qr_kod_url'])
+        
+        # --- Tahsis Sayaç Kontrolü ---
+        # Tahsis bilgisi (kanal ve satıcı) birlikte değişmişse veya yeni bir etiketse
+        is_new_allocation = (
+            not prev_data or
+            (prev_data and (prev_data.kanal != self.kanal or
+                             prev_data.satici_veteriner_id != self.satici_veteriner_id or
+                             prev_data.satici_petshop_id != self.satici_petshop_id) and
+             (self.kanal and (self.satici_veteriner_id or self.satici_petshop_id)))
+        )
+
+        if is_new_allocation:
+            # Eski tahsis varsa, eski sahibin sayacını azalt
+            if prev_data and (prev_data.satici_veteriner_id or prev_data.satici_petshop_id):
+                self._decrease_allocation_counter(prev_data)
+
+            # Yeni tahsis varsa, yeni sahibin sayacını artır
+            self._increase_allocation_counter()
+
+            # Tahsis tarihi boşsa şimdi doldur
+            if not self.tahsis_tarihi:
+                self.tahsis_tarihi = timezone.now()
+                self.save(update_fields=['tahsis_tarihi'])
+
+
+        # --- Satış kontrolü: Pasif -> Aktif geçişi ---
+        transitioning_to_active = (prev_data and prev_data.aktif is False and self.aktif is True)
+        if transitioning_to_active:
+            # Her geçişte aktivasyon_sayisi +1 (yarış güvenli)
+            Etiket.objects.filter(pk=self.pk).update(aktivasyon_sayisi=F('aktivasyon_sayisi') + 1)
+
+            # İlk aktivasyonsa satış sayacı +1 (yalnızca 1 kez)
+            if not prev_data.first_activated_at:
+                if not self.first_activated_at:
+                    self.first_activated_at = timezone.now()
+                    self.save(update_fields=['first_activated_at'])
+                self._increase_sales_counter()
+    
+    # --- İş mantığı (manuel tahsis istersen) ---
+    def tahsis_et(self, kanal: str, veteriner=None, petshop=None):
+        if self.tahsis_tarihi:
+            raise ValidationError("Bu etiket zaten tahsis edilmiş.")
+        self.kanal = kanal
+        if kanal == KANAL_VET:
+            self.satici_veteriner = veteriner
+            self.satici_petshop = None
+        elif kanal == KANAL_SHOP:
+            self.satici_petshop = petshop
+            self.satici_veteriner = None
+        else:
+            self.satici_veteriner = None
+            self.satici_petshop = None
+        self.full_clean()
+        self.tahsis_tarihi = timezone.now()
+        super().save(update_fields=['kanal', 'satici_veteriner', 'satici_petshop', 'tahsis_tarihi'])
+        self._increase_allocation_counter()
+
+    def aktiflestir(self, user):
+        """
+        Etiketi aktif yapar; sayaçlar save() içinde yönetilir.
+        """
+        self.aktif = True
+        self.aktiflestiren = user
+        self.aktiflestirme_tarihi = timezone.now()
+        self.save(update_fields=['aktif', 'aktiflestiren', 'aktiflestirme_tarihi'])
+
+    def pasiflestir(self, user=None):
+        """
+        Etiketi pasif yapar. Sayaç artmaz.
+        """
+        if not self.pk:
+            self.aktif = False
+            self.aktiflestiren = user or self.aktiflestiren
+            super().save(update_fields=['aktif', 'aktiflestiren'])
+            return
+
+        if Etiket.objects.filter(pk=self.pk, aktif=False).exists():
+            return
+
+        self.aktif = False
+        self.aktiflestiren = user or self.aktiflestiren
+        self.aktiflestirme_tarihi = timezone.now()
+        super().save(update_fields=['aktif', 'aktiflestiren', 'aktiflestirme_tarihi'])
+
+    # --- Sayaçlar ---
+    def _increase_allocation_counter(self):
+        if self.kanal == KANAL_VET and self.satici_veteriner_id:
+            from veteriner.models import Veteriner
+            Veteriner.objects.filter(pk=self.satici_veteriner_id).update(tahsis_sayisi=F('tahsis_sayisi') + 1)
+        elif self.kanal == KANAL_SHOP and self.satici_petshop_id:
+            from petshop.models import Petshop
+            Petshop.objects.filter(pk=self.satici_petshop_id).update(tahsis_sayisi=F('tahsis_sayisi') + 1)
+            
+    def _decrease_allocation_counter(self, prev_data):
+        if prev_data.kanal == KANAL_VET and prev_data.satici_veteriner_id:
+            from veteriner.models import Veteriner
+            Veteriner.objects.filter(pk=prev_data.satici_veteriner_id).update(tahsis_sayisi=F('tahsis_sayisi') - 1)
+        elif prev_data.kanal == KANAL_SHOP and prev_data.satici_petshop_id:
+            from petshop.models import Petshop
+            Petshop.objects.filter(pk=prev_data.satici_petshop_id).update(tahsis_sayisi=F('tahsis_sayisi') - 1)
+
+    def _increase_sales_counter(self):
+        if self.kanal == KANAL_VET and self.satici_veteriner_id:
+            from veteriner.models import Veteriner
+            Veteriner.objects.filter(pk=self.satici_veteriner_id).update(satis_sayisi=F('satis_sayisi') + 1)
+        elif self.kanal == KANAL_SHOP and self.satici_petshop_id:
+            from petshop.models import Petshop
+            Petshop.objects.filter(pk=self.satici_petshop_id).update(satis_sayisi=F('satis_sayisi') + 1)
+        elif self.kanal == KANAL_ONLINE:
+            from core.models import OnlineSatis
+            OnlineSatis.objects.get_or_create(id=1) 
+            OnlineSatis.objects.filter(id=1).update(satis_sayisi=F('satis_sayisi') + 1)
+
 
 class Sahip(models.Model):
     kullanici = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -17,6 +243,7 @@ class Sahip(models.Model):
 
     def __str__(self):
         return f"{self.ad} {self.soyad}".strip() or self.kullanici.username
+
 
 class EvcilHayvan(models.Model):
     TUR_SECENEKLERI = [
@@ -43,29 +270,14 @@ class EvcilHayvan(models.Model):
     kayip_bildirim_tarihi = models.DateTimeField(null=True, blank=True)
     odul_miktari = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     resim = models.ImageField(upload_to='evcil_hayvanlar/', null=True, blank=True)
-    
+
     def resim_varsa_url(self):
         return self.resim.url if self.resim else None
 
     def __str__(self):
         return f"{self.ad} ({self.get_tur_display()})"
 
-class Etiket(models.Model):
-    etiket_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    seri_numarasi = models.CharField(max_length=50, unique=True)
-    evcil_hayvan = models.OneToOneField('EvcilHayvan', on_delete=models.CASCADE, null=True, blank=True)
-    qr_kod_url = models.URLField(blank=True)
-    aktif = models.BooleanField(default=False)
-    olusturulma_tarihi = models.DateTimeField(auto_now_add=True)
-    kilitli = models.BooleanField(default=False)
 
-    def __str__(self):
-        return f"Etiket {self.seri_numarasi} - {self.evcil_hayvan.ad if self.evcil_hayvan else 'Tanımlanmamış'}"
-    def save(self, *args, **kwargs):
-        if not self.qr_kod_url:
-            self.qr_kod_url = f"http://127.0.0.1:8000/tag/{self.etiket_id}/"  # DÜZELTİLDİ
-        super().save(*args, **kwargs)
-        
 class Alerji(models.Model):
     evcil_hayvan = models.ForeignKey(EvcilHayvan, on_delete=models.CASCADE, related_name='alerjiler')
     alerji_turu = models.CharField(max_length=100)
@@ -75,6 +287,7 @@ class Alerji(models.Model):
     def __str__(self):
         return f"{self.evcil_hayvan.ad} - {self.alerji_turu}"
 
+
 class SaglikKaydi(models.Model):
     evcil_hayvan = models.ForeignKey(EvcilHayvan, on_delete=models.CASCADE, related_name='saglik_kayitlari')
     asi_turu = models.CharField(max_length=100)
@@ -83,6 +296,7 @@ class SaglikKaydi(models.Model):
 
     def __str__(self):
         return f"{self.evcil_hayvan.ad} - {self.asi_turu}"
+
 
 class AsiTakvimi(models.Model):
     evcil_hayvan = models.ForeignKey(EvcilHayvan, on_delete=models.CASCADE, related_name='asi_takvimi')
@@ -95,6 +309,7 @@ class AsiTakvimi(models.Model):
     def __str__(self):
         return f"{self.evcil_hayvan.ad} - {self.asi_turu} (Plan: {self.planlanan_tarih})"
 
+
 class IlacKaydi(models.Model):
     evcil_hayvan = models.ForeignKey(EvcilHayvan, on_delete=models.CASCADE, related_name='ilac_kayitlari')
     ilac_adi = models.CharField(max_length=100)
@@ -106,6 +321,7 @@ class IlacKaydi(models.Model):
     def __str__(self):
         return f"{self.evcil_hayvan.ad} - {self.ilac_adi}"
 
+
 class AmeliyatKaydi(models.Model):
     evcil_hayvan = models.ForeignKey(EvcilHayvan, on_delete=models.CASCADE, related_name='ameliyat_kayitlari')
     ameliyat_turu = models.CharField(max_length=100)
@@ -115,6 +331,7 @@ class AmeliyatKaydi(models.Model):
 
     def __str__(self):
         return f"{self.evcil_hayvan.ad} - {self.ameliyat_turu}"
+
 
 class BeslenmeKaydi(models.Model):
     evcil_hayvan = models.ForeignKey(EvcilHayvan, on_delete=models.CASCADE, related_name='beslenme_kayitlari')
@@ -126,17 +343,15 @@ class BeslenmeKaydi(models.Model):
     def __str__(self):
         return f"{self.evcil_hayvan.ad} - {self.besin_turu}"
 
-from django.db import models
-from django.core.validators import MinValueValidator
 
 class KiloKaydi(models.Model):
     evcil_hayvan = models.ForeignKey(EvcilHayvan, on_delete=models.CASCADE, related_name='kilo_kayitlari')
     kilo = models.DecimalField(
-        max_digits=5, 
-        decimal_places=2, 
-        validators=[MinValueValidator(0.1)],  # Minimum 0.1 kg olmalı
-        null=False,  # NULL değerlere izin verme
-        blank=False  # Formda boş bırakılamaz
+        max_digits=5,
+        decimal_places=2,
+        validators=[MinValueValidator(0.1)],
+        null=False,
+        blank=False
     )
     tarih = models.DateField()
     notlar = models.TextField(blank=True)

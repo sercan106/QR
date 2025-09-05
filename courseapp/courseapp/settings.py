@@ -37,12 +37,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'anahtarlik',
+    'anahtarlik',# anahtarlık uygulaması
     'accaunt',  # hesap uygulamasını ekledik
     'shop',  # e-ticaret uygulaması
     'widget_tweaks', # form düzenlemeleri için tasarım iöçin
     'petpanel',  # petpanel uygulaması
     'etiket',  # etiket uygulaması
+    'veteriner',  # veteriner uygulaması
+    'petshop',  # petshop uygulaması
+    
+
 
     # 'django_extensions',
     
@@ -63,7 +67,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'hesap.middleware.LoginRequiredMiddleware',  # Yeni eklenen middleware
+    'courseapp.middleware.ProfileCompletionMiddleware', # Profil tamamlama middleware'i
+    
+    'courseapp.middleware.ProfileCompletionMiddleware', # Profil tamamlama middleware'i
 ]
 
 ROOT_URLCONF = 'courseapp.urls'

@@ -3,7 +3,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from anahtarlik.models import EvcilHayvan, Sahip
-from django.utils import timezone  # Doğru import (datetime yerine django.utils)
+from django.utils import timezone
 
 class EtiketForm(forms.Form):
     seri_numarasi = forms.CharField(
@@ -31,7 +31,7 @@ class EvcilHayvanForm(forms.ModelForm):
 
     class Meta:
         model = EvcilHayvan
-        fields = ['ad', 'tur', 'cins', 'cinsiyet', 'dogum_tarihi']  # Sadece istenen alanlar (saglik, beslenme, davranis kaldırıldı)
+        fields = ['ad', 'tur', 'cins', 'cinsiyet', 'dogum_tarihi']
         widgets = {
             'ad': forms.TextInput(attrs={'class': 'form-control'}),
             'cins': forms.TextInput(attrs={'class': 'form-control'}),

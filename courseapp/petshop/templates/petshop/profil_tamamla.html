@@ -1,0 +1,17 @@
+{% extends "ana.html" %}
+{% block baslik %}<title>Petshop Profil Tamamlama</title>{% endblock %}
+{% block content %}
+<div class="container" style="max-width:700px">
+  <h3 class="my-4">Petshop Profilinizi Tamamlayın</h3>
+  <form method="post">{% csrf_token %}
+    {% for field in form %}
+      <div class="mb-3">
+        <label class="form-label">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+      </div>
+    {% endfor %}
+    <button class="btn btn-primary">Kaydet</button>
+  </form>
+</div>
+{% endblock %}
