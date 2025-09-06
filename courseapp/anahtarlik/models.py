@@ -33,7 +33,7 @@ class Etiket(models.Model):
     kilitli = models.BooleanField(default=False)
 
     # --- Satış kanalı ve partnerler ---
-    kanal = models.CharField(max_length=10, choices=KANAL_SECENEKLERI) # <<< BURAYI DEĞİŞTİRDİM!
+    kanal = models.CharField(max_length=10, choices=KANAL_SECENEKLERI)
     satici_veteriner = models.ForeignKey(
         'veteriner.Veteriner', null=True, blank=True, on_delete=models.SET_NULL, related_name='sattigi_etiketler'
     )
@@ -67,20 +67,21 @@ class Etiket(models.Model):
             # ONLINE ise partnerler boş olmalı
             models.CheckConstraint(
                 name='etiket_online_icin_partner_bos',
-                check=(models.Q(kanal__isnull=True) | ~models.Q(kanal=KANAL_ONLINE) |
-                         (models.Q(satici_veteriner__isnull=True) & models.Q(satici_petshop__isnull=True)))
+                check=(
+                    models.Q(kanal__isnull=True)
+                    | ~models.Q(kanal=KANAL_ONLINE)
+                    | (models.Q(satici_veteriner__isnull=True) & models.Q(satici_petshop__isnull=True))
+                )
             ),
         ]
 
     def __str__(self):
         return f"Etiket {self.seri_numarasi} - {self.evcil_hayvan.ad if self.evcil_hayvan else 'Tanımlanmamış'}"
 
-    # --- Yardımcılar ---
+    # --- QR linkini doğru named URL ile üret ---
     def _build_qr_url(self) -> str:
-        try:
-            path = reverse('etiket:public', kwargs={'etiket_id': self.etiket_id})
-        except Exception:
-            path = f"/tag/{self.etiket_id}/"
+        # Önceden 'etiket:public' adına reverse deneniyordu (yanlış). Doğrusu 'etiket:qr_landing'
+        path = reverse('etiket:qr_landing', kwargs={'tag_id': self.etiket_id})
         site = getattr(settings, 'SITE_URL', 'http://127.0.0.1:8000')
         return f"{site}{path}"
 
@@ -120,7 +121,6 @@ class Etiket(models.Model):
             self.save(update_fields=['qr_kod_url'])
         
         # --- Tahsis Sayaç Kontrolü ---
-        # Tahsis bilgisi (kanal ve satıcı) birlikte değişmişse veya yeni bir etiketse
         is_new_allocation = (
             not prev_data or
             (prev_data and (prev_data.kanal != self.kanal or
@@ -141,7 +141,6 @@ class Etiket(models.Model):
             if not self.tahsis_tarihi:
                 self.tahsis_tarihi = timezone.now()
                 self.save(update_fields=['tahsis_tarihi'])
-
 
         # --- Satış kontrolü: Pasif -> Aktif geçişi ---
         transitioning_to_active = (prev_data and prev_data.aktif is False and self.aktif is True)
@@ -176,18 +175,14 @@ class Etiket(models.Model):
         self._increase_allocation_counter()
 
     def aktiflestir(self, user):
-        """
-        Etiketi aktif yapar; sayaçlar save() içinde yönetilir.
-        """
+        """Etiketi aktif yapar; sayaçlar save() içinde yönetilir."""
         self.aktif = True
         self.aktiflestiren = user
         self.aktiflestirme_tarihi = timezone.now()
         self.save(update_fields=['aktif', 'aktiflestiren', 'aktiflestirme_tarihi'])
 
     def pasiflestir(self, user=None):
-        """
-        Etiketi pasif yapar. Sayaç artmaz.
-        """
+        """Etiketi pasif yapar. Sayaç artmaz."""
         if not self.pk:
             self.aktif = False
             self.aktiflestiren = user or self.aktiflestiren

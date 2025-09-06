@@ -15,6 +15,8 @@ from django.http import HttpResponse
 from django.template.loader import get_template
 from xhtml2pdf import pisa
 
+from django.urls import reverse  # <-- eklendi
+
 
 @login_required
 def profil_duzenle(request):
@@ -29,7 +31,6 @@ def profil_duzenle(request):
         messages.success(request, "Profil bilgileri güncellendi.")
         return redirect('kullanici_paneli')
     return render(request, 'anahtarlik/profil_duzenle.html', {'sahip': sahip})
-
 
 
 @login_required
@@ -128,7 +129,8 @@ def add_pet(request):
                     etiket = Etiket.objects.get(id=request.session['etiket_id'])
                     etiket.evcil_hayvan = evcil
                     etiket.aktif = True
-                    etiket.qr_kod_url = f"{settings.SITE_URL}/etiket/{etiket.etiket_id}"
+                    # ✅ QR URL'i reverse ile doğru üret
+                    etiket.qr_kod_url = f"{settings.SITE_URL}{reverse('etiket:qr_landing', kwargs={'tag_id': etiket.etiket_id})}"
                     etiket.save()
 
                     del request.session['add_pet_step']
@@ -137,7 +139,7 @@ def add_pet(request):
                     messages.success(request, 'Yeni evcil hayvan eklendi!')
                     return redirect('kullanici_paneli')
             else:
-                print("Form geçersiz:", form.errors)  # Terminale yaz
+                print("Form geçersiz:", form.errors)
         else:
             form = EvcilHayvanForm()
         return render(request, 'anahtarlik/add_pet.html', {'form': form, 'step': 2})
@@ -194,4 +196,3 @@ def delete_pet(request, pet_id):
         messages.success(request, 'Evcil hayvan silindi!')
         return redirect('kullanici_paneli')
     return render(request, 'anahtarlik/delete_confirm.html', {'hayvan': hayvan})
-
