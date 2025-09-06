@@ -1,0 +1,31 @@
+{% extends "ana.html" %}
+{% block content %}
+<h4>Tüm Sipariş Taleplerim</h4>
+<table class="table table-striped table-sm">
+  <thead>
+    <tr>
+      <th>Adet</th><th>Talep Tarihi</th><th>Durum</th>
+      <th>Kargo</th><th>Takip No</th><th>Adres</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for s in page_obj %}
+    <tr>
+      <td>{{ s.talep_edilen_adet }}</td>
+      <td>{{ s.talep_tarihi|date:"d.m.Y H:i" }}</td>
+      <td>
+        {% if s.onaylandi %}<span class="badge bg-success">Onaylandı</span>
+        {% else %}<span class="badge bg-warning text-dark">Beklemede</span>{% endif %}
+        {% if s.kargolandimi %}<span class="badge bg-primary ms-1">Kargolandı</span>{% endif %}
+      </td>
+      <td>{{ s.get_kargo_sirketi_display|default:"—" }}</td>
+      <td>{{ s.kargo_takip_no|default:"—" }}</td>
+      <td>{{ s.gonderim_adresi }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="6" class="text-muted">Kayıt yok.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% include "partials/pagination.html" with page_obj=page_obj %}
+{% endblock %}

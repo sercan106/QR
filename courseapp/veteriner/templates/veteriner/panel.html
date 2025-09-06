@@ -14,19 +14,27 @@
     </div>
 
     <div class="row g-3 mb-4">
-      <div class="col-md-6">
+      <div class="col-md-4">
         <div class="card shadow-sm h-100">
-          <div class="card-body">
-            <h5 class="card-title">Tahsis Sayısı</h5>
+          <div class="card-body text-center">
+            <h6 class="card-title">Tahsis Sayısı</h6>
             <p class="display-6 mb-0">{{ tahsis_sayisi }}</p>
           </div>
         </div>
       </div>
-      <div class="col-md-6">
+      <div class="col-md-4">
         <div class="card shadow-sm h-100">
-          <div class="card-body">
-            <h5 class="card-title">Satış Sayısı</h5>
+          <div class="card-body text-center">
+            <h6 class="card-title">Satış Sayısı</h6>
             <p class="display-6 mb-0">{{ satis_sayisi }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-body text-center">
+            <h6 class="card-title">Kalan Envanter</h6>
+            <p class="display-6 mb-0">{{ kalan_envanter }}</p>
           </div>
         </div>
       </div>
@@ -43,7 +51,10 @@
     <div class="row g-3 mb-4">
       <div class="col-lg-6">
         <div class="card shadow-sm h-100">
-          <div class="card-header"><strong>Son Tahsis Edilen Etiketler</strong></div>
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Son Tahsis Edilen Etiketler</strong>
+            <a href="{% url 'veteriner:tahsis_listesi' %}" class="btn btn-sm btn-link">Hepsini Gör</a> <!-- ✅ -->
+          </div>
           <div class="card-body p-0">
             <div class="table-responsive">
               <table class="table mb-0 table-sm table-striped">
@@ -79,7 +90,10 @@
 
       <div class="col-lg-6">
         <div class="card shadow-sm h-100">
-          <div class="card-header"><strong>Satılan / Aktive Edilen Etiketler</strong></div>
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Satılan / Aktive Edilen Etiketler</strong>
+            <a href="{% url 'veteriner:satis_listesi' %}" class="btn btn-sm btn-link">Hepsini Gör</a> <!-- ✅ -->
+          </div>
           <div class="card-body p-0">
             <div class="table-responsive">
               <table class="table mb-0 table-sm table-striped">
@@ -111,7 +125,10 @@
     <div class="row mb-4">
       <div class="col-12">
         <div class="card shadow-sm">
-          <div class="card-header"><strong>Sipariş Taleplerim</strong></div>
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Sipariş Taleplerim</strong>
+            <a href="{% url 'veteriner:siparis_listesi' %}" class="btn btn-sm btn-link">Hepsini Gör</a> <!-- ✅ -->
+          </div>
           <div class="card-body p-0">
             <div class="table-responsive">
               <table class="table mb-0 table-sm table-striped">
@@ -165,6 +182,10 @@
     {% endif %}
 
   </div>
+
+  <!-- Modal aynı kaldı -->
+  ...
+
 
   <div class="modal fade" id="siparisModal" tabindex="-1" aria-labelledby="siparisModalLabel" aria-hidden="true">
     <div class="modal-dialog">

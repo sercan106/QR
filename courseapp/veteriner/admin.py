@@ -1,59 +1,49 @@
-from django.contrib import admin
-from django.utils.html import format_html
-from django.urls import reverse
-from django.contrib.auth.models import User
-from django.contrib.auth.hashers import make_password
-from .models import Veteriner
+# veteriner/admin.py
+
+from django.contrib import admin, messages
+from django.utils import timezone
+from .models import Veteriner, SiparisIstemi
 
 @admin.register(Veteriner)
 class VeterinerAdmin(admin.ModelAdmin):
+    list_display = ("ad", "il", "ilce", "telefon", "odeme_modeli", "tahsis_sayisi", "satis_sayisi", "kalan_envanter_goster", "aktif")
+    list_filter = ("aktif", "odeme_modeli", "il", "ilce")
+    search_fields = ("ad", "telefon", "email", "il", "ilce")
+    readonly_fields = ()
+    ordering = ("-olusturulma",)
+
+    def kalan_envanter_goster(self, obj):
+        return obj.kalan_envanter
+    kalan_envanter_goster.short_description = "Kalan Envanter"
+
+
+@admin.register(SiparisIstemi)
+class SiparisIstemiAdmin(admin.ModelAdmin):
     list_display = (
-        'ad', 'il', 'ilce', 'telefon',
-        'odeme_modeli', 'tahsis_sayisi', 'satis_sayisi',
-        'aktif', 'olusturulma',
-        'etiketler_link',
+        "veteriner", "talep_edilen_adet", "talep_tarihi",
+        "onaylandi", "kargolandimi", "kargo_sirketi", "kargo_takip_no",
     )
-    list_filter = ('aktif', 'il', 'ilce', 'odeme_modeli')
-    search_fields = ('ad', 'telefon', 'email', 'il', 'ilce')
-    readonly_fields = ('olusturulma', 'tahsis_sayisi', 'satis_sayisi')
+    list_filter = ("onaylandi", "kargolandimi", "kargo_sirketi", "talep_tarihi")
+    search_fields = (
+        "veteriner__ad", "veteriner__il", "veteriner__ilce",
+        "kargo_takip_no", "il", "ilce", "adres_detay"
+    )
+    date_hierarchy = "talep_tarihi"
+    actions = ["isaretle_onaylandi", "isaretle_kargolandı"]
 
     fieldsets = (
-        ('Genel', {
-            'fields': ('ad', 'telefon', 'email', 'aktif', 'odeme_modeli')
-        }),
-        ('Adres', {
-            'fields': ('il', 'ilce', 'adres_detay')
-        }),
-        ('Sayaçlar', {
-            'fields': ('tahsis_sayisi', 'satis_sayisi', 'olusturulma')
-        }),
-        ('Kullanıcı', {
-            'fields': ('kullanici',),
-        }),
+        ("Sipariş", {"fields": ("veteriner", "talep_edilen_adet", "talep_tarihi", "onaylandi", "onay_tarihi")}),
+        ("Gönderim Adresi", {"fields": ("farkli_adres_kullan", "il", "ilce", "adres_detay")}),
+        ("Kargo", {"fields": ("kargolandimi", "kargo_tarihi", "kargo_sirketi", "kargo_takip_no")}),
     )
+    readonly_fields = ("talep_tarihi", "onay_tarihi", "kargo_tarihi")
 
-    def save_model(self, request, obj, form, change):
-        """
-        Admin yeni bir veteriner eklerken otomatik olarak User oluşturur.
-        """
-        if not obj.kullanici:  # eğer ilişkili kullanıcı yoksa
-            username = f"vet_{obj.ad.lower().replace(' ', '_')}"
-            temp_password = User.objects.make_random_password(length=8)
-            user = User.objects.create(
-                username=username,
-                password=make_password(temp_password),
-                is_active=True,
-            )
-            obj.kullanici = user
+    @admin.action(description="Seçilen siparişleri ONAYLA")
+    def isaretle_onaylandi(self, request, queryset):
+        updated = queryset.update(onaylandi=True, onay_tarihi=timezone.now())
+        self.message_user(request, f"{updated} sipariş onaylandı.", level=messages.SUCCESS)
 
-            self.message_user(
-                request,
-                f"Geçici kullanıcı oluşturuldu → Kullanıcı adı: {username}, Şifre: {temp_password}"
-            )
-        super().save_model(request, obj, form, change)
-
-    def etiketler_link(self, obj):
-        url = reverse('admin:anahtarlik_etiket_changelist')
-        qs = f'?satici_veteriner__id__exact={obj.id}'
-        return format_html('<a href="{}{}">Etiketleri Gör</a>', url, qs)
-    etiketler_link.short_description = 'Etiketler'
+    @admin.action(description="Seçilen siparişleri KARGOLANDI işaretle")
+    def isaretle_kargolandı(self, request, queryset):
+        updated = queryset.update(kargolandimi=True, kargo_tarihi=timezone.now())
+        self.message_user(request, f"{updated} sipariş kargolandı olarak işaretlendi.", level=messages.SUCCESS)
