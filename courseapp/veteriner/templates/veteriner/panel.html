@@ -4,15 +4,21 @@
 <head>
   <meta charset="utf-8">
   <title>Veteriner Paneli</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light p-3">
+
   <div class="container">
+    <!-- Üst Başlık -->
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h3 class="mb-0">Merhaba, {{ vet.ad|default:request.user.username }}</h3>
-      <a href="{% url 'veteriner:veteriner_profil_tamamla' %}" class="btn btn-outline-secondary btn-sm">Profili Düzenle</a>
+      <a href="{% url 'veteriner:veteriner_profil_tamamla' %}" class="btn btn-outline-secondary btn-sm">
+        Profili Düzenle
+      </a>
     </div>
 
+    <!-- Özet Kartları -->
     <div class="row g-3 mb-4">
       <div class="col-md-4">
         <div class="card shadow-sm h-100">
@@ -39,7 +45,8 @@
         </div>
       </div>
     </div>
-    
+
+    <!-- Yeni Sipariş Butonu -->
     <div class="row g-3 mb-4">
       <div class="col-12 text-center">
         <button type="button" class="btn btn-lg btn-primary" data-bs-toggle="modal" data-bs-target="#siparisModal">
@@ -48,12 +55,13 @@
       </div>
     </div>
 
+    <!-- Son Tahsis / Satış Listeleri -->
     <div class="row g-3 mb-4">
       <div class="col-lg-6">
         <div class="card shadow-sm h-100">
           <div class="card-header d-flex justify-content-between align-items-center">
             <strong>Son Tahsis Edilen Etiketler</strong>
-            <a href="{% url 'veteriner:tahsis_listesi' %}" class="btn btn-sm btn-link">Hepsini Gör</a> <!-- ✅ -->
+            <a href="{% url 'veteriner:tahsis_listesi' %}" class="btn btn-sm btn-link">Hepsini Gör</a>
           </div>
           <div class="card-body p-0">
             <div class="table-responsive">
@@ -92,7 +100,7 @@
         <div class="card shadow-sm h-100">
           <div class="card-header d-flex justify-content-between align-items-center">
             <strong>Satılan / Aktive Edilen Etiketler</strong>
-            <a href="{% url 'veteriner:satis_listesi' %}" class="btn btn-sm btn-link">Hepsini Gör</a> <!-- ✅ -->
+            <a href="{% url 'veteriner:satis_listesi' %}" class="btn btn-sm btn-link">Hepsini Gör</a>
           </div>
           <div class="card-body p-0">
             <div class="table-responsive">
@@ -121,13 +129,14 @@
         </div>
       </div>
     </div>
-    
+
+    <!-- Son Siparişler -->
     <div class="row mb-4">
       <div class="col-12">
         <div class="card shadow-sm">
           <div class="card-header d-flex justify-content-between align-items-center">
             <strong>Sipariş Taleplerim</strong>
-            <a href="{% url 'veteriner:siparis_listesi' %}" class="btn btn-sm btn-link">Hepsini Gör</a> <!-- ✅ -->
+            <a href="{% url 'veteriner:siparis_listesi' %}" class="btn btn-sm btn-link">Hepsini Gör</a>
           </div>
           <div class="card-body p-0">
             <div class="table-responsive">
@@ -151,6 +160,12 @@
                       {% else %}
                         <span class="badge bg-warning text-dark">Beklemede</span>
                       {% endif %}
+                      {% if s.kargolandimi %}
+                        <span class="badge bg-primary ms-1">Kargolandı</span>
+                      {% endif %}
+                      {% if s.numune_mi %}
+                        <span class="badge bg-info text-dark ms-1">Numune</span>
+                      {% endif %}
                     </td>
                     <td>
                       {% if s.farkli_adres_kullan %}
@@ -173,20 +188,17 @@
       </div>
     </div>
 
+    <!-- Mesajlar -->
     {% if messages %}
       <div class="mt-3">
         {% for m in messages %}
-          <div class="alert alert-{{ m.tags|default:'info' }}">{{ m }}</div>
+          <div class="alert alert-{{ m.tags|default:'info' }} mb-2">{{ m }}</div>
         {% endfor %}
       </div>
     {% endif %}
-
   </div>
 
-  <!-- Modal aynı kaldı -->
-  ...
-
-
+  <!-- Sipariş Modal -->
   <div class="modal fade" id="siparisModal" tabindex="-1" aria-labelledby="siparisModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -194,12 +206,17 @@
           <h5 class="modal-title" id="siparisModalLabel">Yeni Etiket Siparişi</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
         </div>
-        <form method="post">
+
+        <form method="post" novalidate>
           {% csrf_token %}
           <div class="modal-body">
+            <!-- Adet -->
             <div class="mb-3">
-              <label for="{{ siparis_form.talep_edilen_adet.id_for_label }}" class="form-label">Talep Edilen Etiket Adeti</label>
+              <label for="{{ siparis_form.talep_edilen_adet.id_for_label }}" class="form-label">
+                Talep Edilen Etiket Adeti
+              </label>
               {{ siparis_form.talep_edilen_adet }}
+              <div class="form-text">Minimum 5 adet.</div>
               {% if siparis_form.talep_edilen_adet.errors %}
                 <div class="text-danger small mt-1">{{ siparis_form.talep_edilen_adet.errors }}</div>
               {% endif %}
@@ -207,12 +224,13 @@
 
             <hr>
 
+            <!-- Kayıtlı adres -->
             <div class="alert alert-secondary">
-                <h6 class="alert-heading">Kayıtlı Adresiniz</h6>
-                <p class="mb-0">{{ vet.adres_detay }}<br>
-                {{ vet.ilce }}, {{ vet.il }}</p>
+              <h6 class="alert-heading">Kayıtlı Adresiniz</h6>
+              <p class="mb-0">{{ vet.adres_detay }}<br>{{ vet.ilce }}, {{ vet.il }}</p>
             </div>
-            
+
+            <!-- Farklı adrese gönder -->
             <div class="form-check mb-3">
               {{ siparis_form.farkli_adres_kullan }}
               <label class="form-check-label" for="{{ siparis_form.farkli_adres_kullan.id_for_label }}">
@@ -240,18 +258,35 @@
                 {% if siparis_form.adres_detay.errors %}<div class="text-danger small mt-1">{{ siparis_form.adres_detay.errors }}</div>{% endif %}
               </div>
             </div>
+
+            <hr>
+
+            <!-- Numune talebi -->
+            <div class="form-check mb-3">
+              {{ siparis_form.numune_mi }}
+              <label class="form-check-label" for="{{ siparis_form.numune_mi.id_for_label }}">
+                Numune (Ücretsiz) Talebi
+              </label>
+              <div class="form-text">Numune isteği admin tarafından onaylanır.</div>
             </div>
+
+            <div class="alert alert-info small">
+              Ödeme ve kargo işlemleri <strong>admin</strong> tarafından yapılır ve burada görüntülenir.
+            </div>
+          </div>
+
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
             <button type="submit" class="btn btn-primary">Siparişi Gönder</button>
           </div>
         </form>
+
       </div>
     </div>
   </div>
 
+  <!-- JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       const modal = document.getElementById('siparisModal');
@@ -261,19 +296,22 @@
       function toggleYeniAdresAlanlari() {
         yeniAdresAlanlari.style.display = farkliAdresCheckbox.checked ? 'block' : 'none';
       }
-
-      farkliAdresCheckbox.addEventListener('change', toggleYeniAdresAlanlari);
-
-      // Form hatalıysa modal'ı otomatik açan script
-      {% if siparis_form.errors %}
-      const myModal = new bootstrap.Modal(modal);
-      myModal.show();
-      // Eğer hatalar farklı adres alanlarındaysa, modal açıldığında o kısmı da göster
-      const errorsExistInNewAddress = "{% if siparis_form.il.errors or siparis_form.ilce.errors or siparis_form.adres_detay.errors %}true{% else %}false{% endif %}";
-      if (errorsExistInNewAddress === 'true') {
-        farkliAdresCheckbox.checked = true;
+      if (farkliAdresCheckbox) {
+        farkliAdresCheckbox.addEventListener('change', toggleYeniAdresAlanlari);
         toggleYeniAdresAlanlari();
       }
+
+      // Form hatalıysa modal'ı otomatik aç
+      {% if siparis_form.errors %}
+        const myModal = new bootstrap.Modal(modal);
+        myModal.show();
+        // Adres hatası varsa alanları göster
+        {% if siparis_form.il.errors or siparis_form.ilce.errors or siparis_form.adres_detay.errors %}
+          if (farkliAdresCheckbox) {
+            farkliAdresCheckbox.checked = true;
+            toggleYeniAdresAlanlari();
+          }
+        {% endif %}
       {% endif %}
     });
   </script>
