@@ -55,6 +55,19 @@ def veteriner_paneli(request):
         if siparis_form.is_valid():
             siparis = siparis_form.save(commit=False)
             siparis.veteriner = vet
+            
+            # Formdaki farklı adres kutucuğu işaretliyse
+            if siparis.farkli_adres_kullan:
+                # Modeli formdan gelen verilerle günceller
+                siparis.il = siparis_form.cleaned_data['il']
+                siparis.ilce = siparis_form.cleaned_data['ilce']
+                siparis.adres_detay = siparis_form.cleaned_data['adres_detay']
+            else:
+                # İşaretli değilse veterinerin kayıtlı adresini kullanır
+                siparis.il = vet.il
+                siparis.ilce = vet.ilce
+                siparis.adres_detay = vet.adres_detay
+
             siparis.save()
             messages.success(request, "Etiket sipariş talebiniz başarıyla alındı. En kısa sürede sizinle iletişime geçilecektir.")
             return redirect('veteriner:veteriner_paneli')

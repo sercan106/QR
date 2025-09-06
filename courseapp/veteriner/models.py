@@ -35,10 +35,17 @@ class Veteriner(models.Model):
 
 class SiparisIstemi(models.Model):
     veteriner = models.ForeignKey(Veteriner, on_delete=models.CASCADE, related_name='siparis_istekleri')
-    talep_edilen_adet = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
+    talep_edilen_adet = models.PositiveIntegerField(default=1, validators=[MinValueValidator(5)])
     talep_tarihi = models.DateTimeField(auto_now_add=True)
     onaylandi = models.BooleanField(default=False)
     onay_tarihi = models.DateTimeField(null=True, blank=True)
+
+    # --- YENİ ADRES ALANLARI ---
+    farkli_adres_kullan = models.BooleanField(default=False)
+    il = models.CharField(max_length=50, blank=True)
+    ilce = models.CharField(max_length=50, blank=True)
+    adres_detay = models.TextField(blank=True)
+    # --- YENİ ADRES ALANLARI SONU ---
 
     def __str__(self):
         return f"{self.veteriner.ad} - {self.talep_edilen_adet} adet etiket siparişi"
