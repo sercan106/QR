@@ -31,30 +31,44 @@
         </div>
       </div>
     </div>
+    
+    <div class="row g-3 mb-4">
+      <div class="col-12 text-center">
+        <button type="button" class="btn btn-lg btn-primary" data-bs-toggle="modal" data-bs-target="#siparisModal">
+          Yeni Sipariş Talebi Oluştur
+        </button>
+      </div>
+    </div>
 
-    <div class="row g-3">
+    <div class="row g-3 mb-4">
       <div class="col-lg-6">
         <div class="card shadow-sm h-100">
-          <div class="card-header"><strong>Tahsis Edilen Etiketler</strong></div>
+          <div class="card-header"><strong>Son Tahsis Edilen Etiketler</strong></div>
           <div class="card-body p-0">
             <div class="table-responsive">
               <table class="table mb-0 table-sm table-striped">
                 <thead>
                   <tr>
                     <th>Seri No</th>
-                    <th>Tahsis</th>
-                    <th>Aktif mi</th>
+                    <th>Tahsis Tarihi</th>
+                    <th>Durum</th>
                   </tr>
                 </thead>
                 <tbody>
                 {% for e in tahsis_edilenler %}
                   <tr>
                     <td>{{ e.seri_numarasi }}</td>
-                    <td>{{ e.tahsis_tarihi|date:"d.m.Y H:i" }}</td>
-                    <td>{% if e.aktif %}Evet{% else %}Hayır{% endif %}</td>
+                    <td>{{ e.tahsis_tarihi|date:"d.m.Y" }}</td>
+                    <td>
+                      {% if e.aktif %}
+                        <span class="badge bg-success">Aktif</span>
+                      {% else %}
+                        <span class="badge bg-warning text-dark">Pasif</span>
+                      {% endif %}
+                    </td>
                   </tr>
                 {% empty %}
-                  <tr><td colspan="3" class="text-muted p-3">Kayıt yok.</td></tr>
+                  <tr><td colspan="3" class="text-muted p-3">Tahsis edilmiş etiket yok.</td></tr>
                 {% endfor %}
                 </tbody>
               </table>
@@ -92,7 +106,46 @@
           </div>
         </div>
       </div>
-
+    </div>
+    
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-header"><strong>Sipariş Taleplerim</strong></div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table mb-0 table-sm table-striped">
+                <thead>
+                  <tr>
+                    <th>Talep Edilen Adet</th>
+                    <th>Talep Tarihi</th>
+                    <th>Durum</th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for s in siparis_istekleri %}
+                  <tr>
+                    <td>{{ s.talep_edilen_adet }}</td>
+                    <td>{{ s.talep_tarihi|date:"d.m.Y" }}</td>
+                    <td>
+                      {% if s.onaylandi %}
+                        <span class="badge bg-success">Onaylandı</span>
+                      {% else %}
+                        <span class="badge bg-warning text-dark">Beklemede</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="3" class="text-muted p-3">Henüz sipariş talebiniz bulunmamaktadır.</td>
+                  </tr>
+                {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     {% if messages %}
@@ -102,6 +155,48 @@
         {% endfor %}
       </div>
     {% endif %}
+
   </div>
+
+  <div class="modal fade" id="siparisModal" tabindex="-1" aria-labelledby="siparisModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="siparisModalLabel">Yeni Etiket Siparişi</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+        </div>
+        <form method="post">
+          {% csrf_token %}
+          <div class="modal-body">
+            <p>Aşağıdan sipariş etmek istediğiniz etiket adedini girin.</p>
+            {{ siparis_form.non_field_errors }}
+            <div class="mb-3">
+              <label for="{{ siparis_form.talep_edilen_adet.id_for_label }}" class="form-label">Talep Edilen Etiket Adeti</label>
+              {{ siparis_form.talep_edilen_adet }}
+              {% if siparis_form.talep_edilen_adet.errors %}
+                <div class="text-danger small mt-1">{{ siparis_form.talep_edilen_adet.errors }}</div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+            <button type="submit" class="btn btn-primary">Siparişi Gönder</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  {% if siparis_form.errors %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var myModal = new bootstrap.Modal(document.getElementById('siparisModal'));
+      myModal.show();
+    });
+  </script>
+  {% endif %}
+
 </body>
 </html>

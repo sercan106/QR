@@ -1,11 +1,11 @@
 # veteriner/views.py
 
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db.models import Q
-from .models import Veteriner
-from .forms import VeterinerProfileForm
+from .models import Veteriner, SiparisIstemi
+from .forms import VeterinerProfileForm, SiparisForm
 
 # Etiket modelini buradan import ediyoruz (ilişkili listelemeler için)
 from anahtarlik.models import Etiket, KANAL_VET
@@ -17,16 +17,11 @@ def is_veteriner(user):
 @login_required
 @user_passes_test(is_veteriner)
 def veteriner_profil_tamamla(request):
-    """
-    Geçici kullanıcı adı/şifre ile giren veteriner,
-    eksik profilini tamamlar. Tamamsa direkt panel'e atar.
-    """
     vet, created = Veteriner.objects.get_or_create(
         kullanici=request.user,
         defaults={"ad": request.user.get_full_name() or request.user.username, "aktif": True},
     )
 
-    # Zaten tamamlanmışsa panel'e gönder
     if vet.il and vet.adres_detay:
         return redirect("veteriner:veteriner_paneli")
 
@@ -45,34 +40,43 @@ def veteriner_profil_tamamla(request):
 @login_required
 @user_passes_test(is_veteriner)
 def veteriner_paneli(request):
-    """
-    Veteriner ana paneli:
-    - Tahsis edilen etiketler
-    - Satılan (ilk aktivasyonu yapılmış) etiketler
-    - Sayaçların özet görünümü
-    """
     try:
         vet = request.user.veteriner_profili
     except Veteriner.DoesNotExist:
         messages.info(request, "Lütfen veteriner profilinizi tamamlayın.")
         return redirect("veteriner:veteriner_profil_tamamla")
 
-    # Profil eksikse tamamlama sayfasına yönlendir
     if not vet.il or not vet.adres_detay:
         return redirect("veteriner:veteriner_profil_tamamla")
 
+    # POST isteği geldiğinde sipariş formunu işleriz
+    if request.method == 'POST':
+        siparis_form = SiparisForm(request.POST)
+        if siparis_form.is_valid():
+            siparis = siparis_form.save(commit=False)
+            siparis.veteriner = vet
+            siparis.save()
+            messages.success(request, "Etiket sipariş talebiniz başarıyla alındı. En kısa sürede sizinle iletişime geçilecektir.")
+            return redirect('veteriner:veteriner_paneli')
+    else:
+        siparis_form = SiparisForm()
+        
     tahsis_edilenler = Etiket.objects.filter(
         satici_veteriner=vet,
         kanal=KANAL_VET
     ).order_by("-tahsis_tarihi", "-olusturulma_tarihi")
 
-    satilanlar = tahsis_edilenler.filter(aktif=True).order_by("-first_activated_at", "-aktiflestirme_tarihi")
+    satilanlar = tahsis_edilenler.filter(aktif=True)
+    
+    siparis_istekleri = SiparisIstemi.objects.filter(veteriner=vet).order_by('-talep_tarihi')
 
     context = {
         "vet": vet,
-        "tahsis_sayisi": vet.tahsis_sayisi,
-        "satis_sayisi": vet.satis_sayisi,
-        "tahsis_edilenler": tahsis_edilenler,
-        "satilanlar": satilanlar,
+        "tahsis_sayisi": tahsis_edilenler.count(),
+        "satis_sayisi": satilanlar.count(),
+        "tahsis_edilenler": tahsis_edilenler[:5],
+        "satilanlar": satilanlar[:5],
+        "siparis_istekleri": siparis_istekleri,
+        "siparis_form": siparis_form, # Formu bağlama dahil ediyoruz
     }
     return render(request, "veteriner/panel.html", context)

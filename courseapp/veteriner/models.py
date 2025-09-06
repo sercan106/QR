@@ -1,5 +1,9 @@
+# veteriner/models.py
+
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator
+from anahtarlik.models import Etiket, KANAL_VET
 
 # Yeni ödeme modeli sabitleri
 ODEME_PESIN = 'PESIN'
@@ -21,18 +25,20 @@ class Veteriner(models.Model):
 
     aktif = models.BooleanField(default=True)
     olusturulma = models.DateTimeField(auto_now_add=True)
-    
-    # --- YENİ ALAN ---
     odeme_modeli = models.CharField(max_length=10, choices=ODEME_SECENEKLERI, default=ODEME_PESIN)
 
-    # Sayaçlar
-    tahsis_sayisi = models.PositiveIntegerField(default=0)  # verilen etiket adedi (ilk tahsis)
-    satis_sayisi  = models.PositiveIntegerField(default=0)  # ilk aktivasyon adedi
-
-    class Meta:
-        ordering = ['ad']
-        verbose_name = 'Veteriner'
-        verbose_name_plural = 'Veterinerler'
+    tahsis_sayisi = models.PositiveIntegerField(default=0)
+    satis_sayisi = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return self.ad
+
+class SiparisIstemi(models.Model):
+    veteriner = models.ForeignKey(Veteriner, on_delete=models.CASCADE, related_name='siparis_istekleri')
+    talep_edilen_adet = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
+    talep_tarihi = models.DateTimeField(auto_now_add=True)
+    onaylandi = models.BooleanField(default=False)
+    onay_tarihi = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.veteriner.ad} - {self.talep_edilen_adet} adet etiket siparişi"

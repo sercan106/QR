@@ -1,6 +1,7 @@
 # veteriner/forms.py
+
 from django import forms
-from .models import Veteriner
+from .models import Veteriner, SiparisIstemi
 
 class VeterinerProfileForm(forms.ModelForm):
     class Meta:
@@ -14,4 +15,12 @@ class VeterinerProfileForm(forms.ModelForm):
             "ilce": forms.TextInput(attrs={"class": "form-control"}),
             "adres_detay": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
             "aktif": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        }
+
+class SiparisForm(forms.ModelForm):
+    class Meta:
+        model = SiparisIstemi
+        fields = ['talep_edilen_adet']
+        widgets = {
+            'talep_edilen_adet': forms.NumberInput(attrs={'class': 'form-control', 'min': 1})
         }
