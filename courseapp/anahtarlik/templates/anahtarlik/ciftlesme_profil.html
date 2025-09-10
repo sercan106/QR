@@ -1,0 +1,30 @@
+{% extends 'ana.html' %}
+{% block content %}
+<div class="container py-4">
+  <h4>{{ hayvan.ad }} için Çiftleşme Profili</h4>
+  <form method="post" enctype="multipart/form-data" class="mt-3">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+    <div class="row g-3">
+      {% for f in form %}
+        <div class="col-md-6">
+          <label class="form-label" for="{{ f.id_for_label }}">{{ f.label }}</label>
+          {{ f }}
+          {% if f.help_text %}<div class="form-text">{{ f.help_text }}</div>{% endif %}
+          {% if f.errors %}<div class="text-danger small">{{ f.errors }}</div>{% endif %}
+        </div>
+      {% endfor %}
+    </div>
+    <div class="mt-3">
+      <button type="submit" class="btn btn-primary">Kaydet</button>
+      <a href="{% url 'ciftlesme_kesfet' %}" class="btn btn-outline-secondary">Keşfet</a>
+    </div>
+  </form>
+  <div class="mt-3">
+    <a href="{% url 'pet_detail' hayvan.id %}">&larr; Hayvan detayına dön</a>
+  </div>
+  </div>
+{% endblock %}
+

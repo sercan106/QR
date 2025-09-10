@@ -28,6 +28,7 @@ INSTALLED_APPS = [
 
     # Proje uygulamaları
     'anahtarlik',
+    'core',
     'accaunt',
     'shop',
     'widget_tweaks',

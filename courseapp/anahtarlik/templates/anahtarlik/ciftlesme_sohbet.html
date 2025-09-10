@@ -1,0 +1,29 @@
+{% extends 'ana.html' %}
+{% block content %}
+<div class="container py-4">
+  <h4>{{ istek.gonderen.ad }} ↔ {{ istek.hedef.ad }} - Mesajlaşma</h4>
+  <div class="card mb-3">
+    <div class="card-body" style="max-height: 50vh; overflow:auto">
+      {% for m in mesajlar %}
+        <div class="mb-2 {% if m.gonderen == request.user %}text-end{% endif %}">
+          <div class="small text-muted">{{ m.gonderen.username }} · {{ m.olusturulma|date:"d.m.Y H:i" }}</div>
+          <div class="p-2 d-inline-block rounded bg-light">{{ m.icerik|linebreaksbr }}</div>
+        </div>
+      {% empty %}
+        <div class="text-muted">Henüz mesaj yok.</div>
+      {% endfor %}
+    </div>
+  </div>
+  <form method="post" class="card">
+    {% csrf_token %}
+    <div class="card-body">
+      {{ form.icerik }}
+      <div class="mt-2 d-flex gap-2">
+        <button class="btn btn-primary" type="submit">Gönder</button>
+        <a class="btn btn-outline-secondary" href="{% url 'ciftlesme_istekler' %}">İsteklere dön</a>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
