@@ -74,6 +74,8 @@ TEMPLATES = [
 
                 # Sepet özeti (shop ile entegre)
                 'courseapp.context_processors.sepet_ozeti',
+                # Kullanıcı panel hedef URL'si (rol bazlı)
+                'courseapp.context_processors.user_panel_target',
             ],
         },
     },

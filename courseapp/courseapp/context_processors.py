@@ -1,5 +1,44 @@
 # courseapp/context_processors.py (Global sepet context için)
 from shop.models import Urun
+from django.urls import reverse
+from django.utils.functional import cached_property
+
+def user_panel_target(request):
+    """
+    Kullanıcı paneli menüsü için hedef URL'yi belirler:
+    - Veteriner: profil tamam ise veteriner paneli, değilse profil tamamlama
+    - Petshop: profil tamamlama (panel yoksa), aksi halde panel
+    - Son kullanıcı: evcil hayvan kullanıcı paneli
+    """
+    try:
+        user = request.user
+        if not user.is_authenticated:
+            return { 'user_panel_url': reverse('user_login') }
+
+        # Veteriner profili var mı?
+        vet = getattr(user, 'veteriner_profili', None)
+        if vet is not None:
+            if not vet.il or not vet.adres_detay:
+                return { 'user_panel_url': reverse('veteriner:veteriner_profil_tamamla') }
+            return { 'user_panel_url': reverse('veteriner:veteriner_paneli') }
+
+        # Petshop profili var mı?
+        shop = getattr(user, 'petshop_profili', None)
+        if shop is not None:
+            # Panel URL'i tanımlı değilse profil tamamlama sayfasına yönlendir.
+            try:
+                return { 'user_panel_url': reverse('petshop:petshop_paneli') }
+            except Exception:
+                return { 'user_panel_url': reverse('petshop:petshop_profil_tamamla') }
+
+        # Son kullanıcı (Sahip)
+        return { 'user_panel_url': reverse('kullanici_paneli') }
+    except Exception:
+        # Her ihtimale karşı, kullanıcı paneline veya girişe düş
+        try:
+            return { 'user_panel_url': reverse('kullanici_paneli') }
+        except Exception:
+            return { 'user_panel_url': reverse('user_login') }
 
 def sepet_ozeti(request):
     sepet = request.session.get('sepet', {})

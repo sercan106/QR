@@ -83,7 +83,22 @@ def ev(request):
 
 @login_required
 def kullanici_paneli(request):
-    sahip = get_object_or_404(Sahip, kullanici=request.user)
+    # Rol bazlı yönlendirme: veteriner/petshop kullanıcıları kendi panellerine gitsin
+    user = request.user
+    vet = getattr(user, 'veteriner_profili', None)
+    if vet is not None:
+        if not vet.il or not vet.adres_detay:
+            return redirect('veteriner:veteriner_profil_tamamla')
+        return redirect('veteriner:veteriner_paneli')
+
+    shop = getattr(user, 'petshop_profili', None)
+    if shop is not None:
+        try:
+            return redirect('petshop:petshop_paneli')
+        except Exception:
+            return redirect('petshop:petshop_profil_tamamla')
+
+    sahip = get_object_or_404(Sahip, kullanici=user)
     evcil_hayvanlar = sahip.evcil_hayvanlar.all().order_by('-id')
     paginator = Paginator(evcil_hayvanlar, 6)
     page_number = request.GET.get('page')

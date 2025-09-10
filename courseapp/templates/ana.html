@@ -602,6 +602,17 @@
             });
         });
     </script>
+    <script>
+        // Kullanıcı Paneli menüsü rol bazlı hedefe yönlendirilsin
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                var link = document.querySelector('a[href*="kullanici_paneli"]');
+                if (link && '{{ user_panel_url }}') {
+                    link.setAttribute('href', '{{ user_panel_url }}');
+                }
+            } catch (e) { /* sessiz */ }
+        });
+    </script>
     {% block js_dosyalar %}{% endblock %}
 
     {% if messages %}
