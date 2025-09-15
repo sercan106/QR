@@ -14,6 +14,8 @@ urlpatterns = [
     path('register/step-2/', views.step_2_pet_info, name='step_2_pet_info'),
     path('register/step-3/', views.step_3_owner_info, name='step_3_owner_info'),
     path('register/step-4/', views.step_4_complete, name='step_4_complete'),
+    path('register/breeds/', views.breeds_for_species, name='breeds_for_species'),
+    path('register/districts/', views.districts_for_province, name='districts_for_province'),
 
 
 

@@ -136,7 +136,7 @@
             </div>
         {% endfor %}
 
-        <form method="POST" data-aos="fade-up" data-aos-delay="400">
+        <form method="POST" data-aos="fade-up" data-aos-delay="400" id="register-form">
             {% csrf_token %}
             {% for field in form %}
                 <div class="form-group">
@@ -168,5 +168,66 @@
             this.parentElement.classList.remove('focused');
         });
     });
+
+    // Adım 2 için: Tür değiştikçe cins listesini getir
+    (function() {
+        const tur = document.getElementById('id_tur');
+        const cins = document.getElementById('id_cins');
+        if (tur && cins) {
+            const loadBreeds = async function(turId) {
+                cins.innerHTML = '<option value="">Seçiniz</option>';
+                if (!turId) return;
+                try {
+                    const resp = await fetch('{% url "breeds_for_species" %}?tur_id=' + turId);
+                    const data = await resp.json();
+                    (data.items || []).forEach(function(item){
+                        const opt = document.createElement('option');
+                        opt.value = item.id;
+                        opt.textContent = item.ad;
+                        cins.appendChild(opt);
+                    });
+                } catch (e) { /* sessizce geç */ }
+            };
+
+            tur.addEventListener('change', function(){
+                loadBreeds(this.value);
+            });
+
+            // Sayfa ilk açıldığında tür seçili ise ilgili cinsleri yükle
+            if (tur.value) {
+                loadBreeds(tur.value);
+            }
+        }
+    })();
+
+    // Adım 3 için: İl değiştikçe ilçe listesini getir
+    (function() {
+        const il = document.getElementById('id_il');
+        const ilce = document.getElementById('id_ilce');
+        if (il && ilce) {
+            const loadDistricts = async function(ilId) {
+                ilce.innerHTML = '<option value="">Seçiniz</option>';
+                if (!ilId) return;
+                try {
+                    const resp = await fetch('{% url "districts_for_province" %}?il_id=' + ilId);
+                    const data = await resp.json();
+                    (data.items || []).forEach(function(item){
+                        const opt = document.createElement('option');
+                        opt.value = item.id;
+                        opt.textContent = item.ad;
+                        ilce.appendChild(opt);
+                    });
+                } catch (e) { /* sessizce geç */ }
+            };
+            il.addEventListener('change', function(){
+                loadDistricts(this.value);
+            });
+            if (il.value) {
+                loadDistricts(il.value);
+            }
+        }
+    })();
 </script>
+<script src="{% static 'accaunt/_cins_other_toggle.js' %}"></script>
+<script src="{% static 'accaunt/_districts_toggle.js' %}"></script>
 {% endblock js_dosyalar %}

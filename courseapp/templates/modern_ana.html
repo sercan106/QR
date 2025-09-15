@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block baslik %}PetSafe Hub - Modern{% endblock %}</title>
+    
+    <!-- Modern CSS Framework -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Modern Color Palette */
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --accent-color: #f5576c;
+            --success-color: #00f2fe;
+            --warning-color: #38f9d7;
+            
+            --dark-bg: #0f0f23;
+            --dark-surface: #1a1a2e;
+            --dark-card: #16213e;
+            --light-bg: #f8fafc;
+            --light-surface: #ffffff;
+            
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --text-light: #ffffff;
+            
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+            --radius-2xl: 1.5rem;
+            
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--light-bg);
+            overflow-x: hidden;
+        }
+        
+        /* Modern Navbar */
+        .modern-navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            transition: var(--transition);
+            padding: 1rem 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        
+        .modern-navbar.scrolled {
+            padding: 0.5rem 0;
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .navbar-brand-modern {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 800;
+            font-size: 1.75rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        
+        .navbar-brand-modern:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+        }
+        
+        .nav-link-modern {
+            font-weight: 500;
+            color: var(--text-primary);
+            text-decoration: none;
+            padding: 0.75rem 1.25rem;
+            border-radius: var(--radius-lg);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .nav-link-modern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--primary-gradient);
+            transition: var(--transition);
+            z-index: -1;
+        }
+        
+        .nav-link-modern:hover {
+            color: var(--text-light);
+            transform: translateY(-2px);
+        }
+        
+        .nav-link-modern:hover::before {
+            left: 0;
+        }
+        
+        .btn-modern {
+            padding: 0.75rem 2rem;
+            border-radius: var(--radius-xl);
+            font-weight: 600;
+            text-decoration: none;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary-modern {
+            background: var(--primary-gradient);
+            color: var(--text-light);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-primary-modern:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-xl);
+            color: var(--text-light);
+        }
+        
+        .btn-outline-modern {
+            background: transparent;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+        
+        .btn-outline-modern:hover {
+            background: var(--primary-gradient);
+            color: var(--text-light);
+            border-color: transparent;
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-xl);
+        }
+        
+        /* Modern Hero Section */
+        .hero-modern {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-modern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><radialGradient id="a" cx="50%" cy="50%"><stop offset="0%" stop-color="%23ffffff" stop-opacity="0.1"/><stop offset="100%" stop-color="%23ffffff" stop-opacity="0"/></radialGradient></defs><circle cx="200" cy="200" r="100" fill="url(%23a)"/><circle cx="800" cy="300" r="150" fill="url(%23a)"/><circle cx="400" cy="700" r="120" fill="url(%23a)"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .hero-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 800;
+            color: var(--text-light);
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 2rem;
+            max-width: 600px;
+        }
+        
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        /* Modern Cards */
+        .card-modern {
+            background: var(--light-surface);
+            border-radius: var(--radius-2xl);
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card-modern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+            transform: scaleX(0);
+            transition: var(--transition);
+        }
+        
+        .card-modern:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-xl);
+        }
+        
+        .card-modern:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .card-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: var(--radius-xl);
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            color: var(--text-light);
+            font-size: 2rem;
+        }
+        
+        .card-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .card-text {
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+        
+        /* Modern Sections */
+        .section-modern {
+            padding: 6rem 0;
+            position: relative;
+        }
+        
+        .section-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 1rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .section-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 1.125rem;
+            margin-bottom: 4rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        /* Modern Stats */
+        .stats-modern {
+            background: var(--dark-bg);
+            color: var(--text-light);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stats-modern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="%23ffffff" stroke-width="0.5" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+        }
+        
+        .stat-item {
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .stat-number {
+            font-family: 'Poppins', sans-serif;
+            font-size: 3rem;
+            font-weight: 800;
+            background: var(--success-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.125rem;
+            font-weight: 500;
+        }
+        
+        /* Modern Footer */
+        .footer-modern {
+            background: var(--dark-bg);
+            color: var(--text-light);
+            padding: 4rem 0 2rem;
+            position: relative;
+        }
+        
+        .footer-modern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--primary-gradient);
+        }
+        
+        .footer-brand {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+        
+        .footer-text {
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 2rem;
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .social-link {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--radius-lg);
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+        }
+        
+        .social-link:hover {
+            background: var(--primary-gradient);
+            transform: translateY(-3px);
+            color: var(--text-light);
+        }
+        
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .animate-fade-up {
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        .animate-fade-left {
+            animation: fadeInLeft 0.8s ease-out;
+        }
+        
+        .animate-fade-right {
+            animation: fadeInRight 0.8s ease-out;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn-modern {
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .card-modern {
+                padding: 1.5rem;
+            }
+            
+            .section-modern {
+                padding: 4rem 0;
+            }
+            
+            .social-links {
+                justify-content: center;
+            }
+        }
+        
+        /* Dark Mode Support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --light-bg: #0f0f23;
+                --light-surface: #1a1a2e;
+                --text-primary: #f1f5f9;
+                --text-secondary: #cbd5e1;
+                --border-color: #334155;
+            }
+            
+            .modern-navbar {
+                background: rgba(26, 26, 46, 0.95);
+                border-bottom-color: var(--border-color);
+            }
+        }
+        
+        /* Utility Classes */
+        .text-gradient {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .bg-gradient {
+            background: var(--primary-gradient);
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <!-- Modern Navbar -->
+    <nav class="modern-navbar">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <a href="#" class="navbar-brand-modern">
+                    <i class="fas fa-paw me-2"></i>PetSafe Hub
+                </a>
+                
+                <div class="d-none d-lg-flex align-items-center gap-4">
+                    <a href="#" class="nav-link-modern">Ana Sayfa</a>
+                    <a href="#services" class="nav-link-modern">Hizmetler</a>
+                    <a href="#about" class="nav-link-modern">Hakkımızda</a>
+                    <a href="#contact" class="nav-link-modern">İletişim</a>
+                    <a href="#" class="btn-primary-modern btn-modern">Giriş Yap</a>
+                </div>
+                
+                <button class="btn btn-outline-primary d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Mobile Menu -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="mobileMenu">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title text-gradient">Menü</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div class="d-flex flex-column gap-3">
+                <a href="#" class="nav-link-modern">Ana Sayfa</a>
+                <a href="#services" class="nav-link-modern">Hizmetler</a>
+                <a href="#about" class="nav-link-modern">Hakkımızda</a>
+                <a href="#contact" class="nav-link-modern">İletişim</a>
+                <a href="#" class="btn-primary-modern btn-modern">Giriş Yap</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hero Section -->
+    <section class="hero-modern">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <div class="hero-content animate-fade-left">
+                        <h1 class="hero-title">
+                            Evcil Dostlarınız İçin 
+                            <span class="text-warning">Modern Çözümler</span>
+                        </h1>
+                        <p class="hero-subtitle">
+                            PetSafe Hub ile evcil hayvanlarınızın sağlığını, mutluluğunu ve güvenliğini en modern teknolojilerle takip edin.
+                        </p>
+                        <div class="hero-buttons">
+                            <a href="#services" class="btn-primary-modern btn-modern">
+                                <i class="fas fa-rocket me-2"></i>Hizmetleri Keşfet
+                            </a>
+                            <a href="#about" class="btn-outline-modern btn-modern">
+                                <i class="fas fa-play me-2"></i>Nasıl Çalışır?
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="text-center animate-fade-right">
+                        <div class="position-relative">
+                            <div class="glass-effect rounded-circle p-5 d-inline-block">
+                                <i class="fas fa-heart text-light" style="font-size: 8rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Services Section -->
+    <section id="services" class="section-modern">
+        <div class="container">
+            <div class="animate-fade-up">
+                <h2 class="section-title">Modern Hizmetlerimiz</h2>
+                <p class="section-subtitle">
+                    Evcil dostlarınız için en kaliteli ve modern hizmetleri sunuyoruz
+                </p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="card-modern animate-fade-up" style="animation-delay: 0.1s;">
+                        <div class="card-icon">
+                            <i class="fas fa-stethoscope"></i>
+                        </div>
+                        <h3 class="card-title">Veteriner Hizmetleri</h3>
+                        <p class="card-text">
+                            Uzman veteriner hekimlerimizle evcil dostlarınızın sağlığını koruyoruz. 7/24 acil müdahale hizmeti.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="card-modern animate-fade-up" style="animation-delay: 0.2s;">
+                        <div class="card-icon">
+                            <i class="fas fa-cut"></i>
+                        </div>
+                        <h3 class="card-title">Pet Kuaför</h3>
+                        <p class="card-text">
+                            Profesyonel bakım ve güzellik hizmetleri ile evcil dostlarınızı şımartıyoruz.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="card-modern animate-fade-up" style="animation-delay: 0.3s;">
+                        <div class="card-icon">
+                            <i class="fas fa-home"></i>
+                        </div>
+                        <h3 class="card-title">Pet Otel</h3>
+                        <p class="card-text">
+                            Seyahatlerinizde evcil dostlarınız için güvenli ve konforlu konaklama imkanı.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="card-modern animate-fade-up" style="animation-delay: 0.4s;">
+                        <div class="card-icon">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <h3 class="card-title">Eğitim Hizmetleri</h3>
+                        <p class="card-text">
+                            Uzman eğitmenlerimizle evcil dostlarınızın davranış eğitimi ve sosyalleşme programları.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="card-modern animate-fade-up" style="animation-delay: 0.5s;">
+                        <div class="card-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <h3 class="card-title">Pet Shop</h3>
+                        <p class="card-text">
+                            Kaliteli mama, oyuncak ve aksesuar çeşitleri ile evcil dostlarınızın ihtiyaçlarını karşılıyoruz.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="card-modern animate-fade-up" style="animation-delay: 0.6s;">
+                        <div class="card-icon">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <h3 class="card-title">Mobil Uygulama</h3>
+                        <p class="card-text">
+                            Modern mobil uygulamamızla randevu alın, takip edin ve tüm hizmetlere kolayca erişin.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Stats Section -->
+    <section class="stats-modern section-modern">
+        <div class="container">
+            <div class="row g-4 text-center">
+                <div class="col-lg-3 col-md-6">
+                    <div class="stat-item animate-fade-up" style="animation-delay: 0.1s;">
+                        <span class="stat-number">10K+</span>
+                        <span class="stat-label">Mutlu Müşteri</span>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="stat-item animate-fade-up" style="animation-delay: 0.2s;">
+                        <span class="stat-number">50+</span>
+                        <span class="stat-label">Uzman Ekip</span>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="stat-item animate-fade-up" style="animation-delay: 0.3s;">
+                        <span class="stat-number">24/7</span>
+                        <span class="stat-label">Destek Hizmeti</span>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="stat-item animate-fade-up" style="animation-delay: 0.4s;">
+                        <span class="stat-number">5★</span>
+                        <span class="stat-label">Müşteri Memnuniyeti</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- About Section -->
+    <section id="about" class="section-modern">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <div class="animate-fade-left">
+                        <h2 class="section-title text-start">
+                            Neden <span class="text-gradient">PetSafe Hub?</span>
+                        </h2>
+                        <p class="text-secondary mb-4">
+                            Modern teknoloji ile geleneksel bakımı birleştirerek, evcil dostlarınız için en iyi hizmeti sunuyoruz.
+                        </p>
+                        
+                        <div class="d-flex align-items-start mb-4">
+                            <div class="bg-gradient rounded-circle p-3 me-3">
+                                <i class="fas fa-check text-light"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold">Uzman Ekip</h5>
+                                <p class="text-secondary mb-0">Alanında uzman veteriner hekim ve bakım uzmanları</p>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-start mb-4">
+                            <div class="bg-gradient rounded-circle p-3 me-3">
+                                <i class="fas fa-shield-alt text-light"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold">Güvenli Hizmet</h5>
+                                <p class="text-secondary mb-0">En yüksek güvenlik standartları ile hizmet</p>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-start mb-4">
+                            <div class="bg-gradient rounded-circle p-3 me-3">
+                                <i class="fas fa-heart text-light"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold">Sevgi Dolu Bakım</h5>
+                                <p class="text-secondary mb-0">Her evcil dostunuza kendi dostumuz gibi davranıyoruz</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="text-center animate-fade-right">

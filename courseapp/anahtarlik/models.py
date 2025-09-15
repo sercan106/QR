@@ -9,6 +9,8 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 from django.db.models import F
 import uuid
+# Import additional model modules so Django registers them
+from . import dictionaries as _dictionary_models  # noqa: F401
 
 
 # --- Kanal sabitleri (modül düzeyi!) ---
@@ -236,6 +238,15 @@ class Sahip(models.Model):
     adres = models.TextField(blank=True)
     acil_durum_kontagi = models.CharField(max_length=15, blank=True)
 
+    # Konum ve profil alanları (migrasyonlarla ekli)
+    il = models.CharField(max_length=50, blank=True)
+    ilce = models.CharField(max_length=50, blank=True)
+    il_ref = models.ForeignKey('anahtarlik.Il', null=True, blank=True, on_delete=models.SET_NULL, related_name='sahipleri')
+    ilce_ref = models.ForeignKey('anahtarlik.Ilce', null=True, blank=True, on_delete=models.SET_NULL, related_name='sahipleri')
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+    profil_fotografi = models.ImageField(upload_to='profil/', null=True, blank=True)
+
     def __str__(self):
         return f"{self.ad} {self.soyad}".strip() or self.kullanici.username
 
@@ -254,6 +265,8 @@ class EvcilHayvan(models.Model):
     ad = models.CharField(max_length=100)
     tur = models.CharField(max_length=20, choices=TUR_SECENEKLERI)
     cins = models.CharField(max_length=100)
+    tur_ref = models.ForeignKey('anahtarlik.Tur', null=True, blank=True, on_delete=models.SET_NULL, related_name='hayvanlar')
+    cins_ref = models.ForeignKey('anahtarlik.Cins', null=True, blank=True, on_delete=models.SET_NULL, related_name='hayvanlar')
     cinsiyet = models.CharField(max_length=20, choices=CINSIYET_SECENEKLERI, default='bilinmiyor')
     dogum_tarihi = models.DateField(null=True, blank=True)
     sahip = models.ForeignKey(Sahip, on_delete=models.CASCADE, related_name='evcil_hayvanlar')

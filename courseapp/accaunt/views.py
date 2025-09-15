@@ -11,7 +11,8 @@ from django.shortcuts import render, redirect
 from django.utils import timezone
 
 from anahtarlik.models import Sahip, EvcilHayvan, Etiket
-from accaunt.forms import EtiketForm, EvcilHayvanForm, KullaniciForm
+from accaunt.forms import EtiketForm
+from accaunt.register_forms import EvcilHayvanKayitForm, KullaniciAdresForm
 # Veteriner ve petshop modellerini de import edelim ki kontrol edebilelim
 from veteriner.models import Veteriner
 from petshop.models import Petshop
@@ -43,15 +44,37 @@ def step_2_pet_info(request):
         return redirect('step_1_check_tag')
 
     if request.method == 'POST':
-        form = EvcilHayvanForm(request.POST)
+        form = EvcilHayvanKayitForm(request.POST)
         if form.is_valid():
-            evcil_data = form.cleaned_data.copy()
-            if evcil_data.get('dogum_tarihi'):
-                evcil_data['dogum_tarihi'] = evcil_data['dogum_tarihi'].isoformat()
+            cd = form.cleaned_data
+            tur_obj = cd['tur']
+            # cins seçimi: id ya da "__OTHER__"
+            from anahtarlik.dictionaries import Cins
+            cins_obj = None
+            if cd.get('cins') == '__OTHER__':
+                name = cd.get('cins_diger')
+                if name:
+                    cins_obj, _ = Cins.objects.get_or_create(tur=tur_obj, ad=name.strip())
+            else:
+                try:
+                    cins_obj = Cins.objects.get(id=int(cd.get('cins'))) if cd.get('cins') else None
+                except (Cins.DoesNotExist, ValueError, TypeError):
+                    cins_obj = None
+            tur_adi = tur_obj.ad
+            cins_adi = cins_obj.ad if cins_obj else ''
+            evcil_data = {
+                'ad': cd.get('ad'),
+                'tur': tur_adi or 'diger',
+                'cins': cins_adi or '',
+                'cinsiyet': cd.get('cinsiyet'),
+                'dogum_tarihi': cd.get('dogum_tarihi').isoformat() if cd.get('dogum_tarihi') else None,
+            }
+            evcil_data['tur_ref_id'] = tur_obj.id
+            evcil_data['cins_ref_id'] = cins_obj.id if cins_obj else None
             request.session['evcil_data'] = evcil_data
             return redirect('step_3_owner_info')
     else:
-        form = EvcilHayvanForm()
+        form = EvcilHayvanKayitForm()
     return render(request, 'accaunt/register.html', {'form': form, 'step': 2})
 
 
@@ -61,7 +84,7 @@ def step_3_owner_info(request):
         return redirect('step_1_check_tag')
 
     if request.method == 'POST':
-        form = KullaniciForm(request.POST)
+        form = KullaniciAdresForm(request.POST)
         if form.is_valid():
             username = form.cleaned_data['username']
             email = form.cleaned_data['email']
@@ -86,13 +109,27 @@ def step_3_owner_info(request):
                         ad=form.cleaned_data['ad'],
                         soyad=form.cleaned_data['soyad'],
                         yedek_telefon=form.cleaned_data['yedek_telefon'],
-                        adres=form.cleaned_data['adres']
+                        adres=form.cleaned_data['adres'],
+                        il=form.cleaned_data['il'].ad,
+                        ilce=form.cleaned_data['ilce'].ad,
                     )
+                    # İlişkili il/ilçe referanslarını da kaydet
+                    sahip.il_ref = form.cleaned_data['il']
+                    sahip.ilce_ref = form.cleaned_data['ilce']
+                    sahip.save(update_fields=['il_ref', 'ilce_ref'])
                     evcil_data = request.session['evcil_data']
                     if evcil_data.get('dogum_tarihi'):
                         evcil_data['dogum_tarihi'] = date.fromisoformat(evcil_data['dogum_tarihi'])
 
+                    tur_ref_id = evcil_data.pop('tur_ref_id', None)
+                    cins_ref_id = evcil_data.pop('cins_ref_id', None)
                     evcil = EvcilHayvan.objects.create(sahip=sahip, **evcil_data)
+                    if tur_ref_id:
+                        evcil.tur_ref_id = tur_ref_id
+                    if cins_ref_id:
+                        evcil.cins_ref_id = cins_ref_id
+                    if tur_ref_id or cins_ref_id:
+                        evcil.save(update_fields=[f for f,v in [('tur_ref',tur_ref_id),('cins_ref',cins_ref_id)] if v])
 
                     etiket = Etiket.objects.get(id=request.session['etiket_id'])
                     etiket.evcil_hayvan = evcil
@@ -105,8 +142,33 @@ def step_3_owner_info(request):
                     request.session.flush()
                     return redirect('step_4_complete')
     else:
-        form = KullaniciForm()
+        form = KullaniciAdresForm()
     return render(request, 'accaunt/register.html', {'form': form, 'step': 3})
+
+
+# --- AJAX: Seçilen tür için cinsleri getir ---
+from django.http import JsonResponse
+from anahtarlik.dictionaries import Cins, Ilce
+
+
+def breeds_for_species(request):
+    tur_id = request.GET.get('tur_id')
+    try:
+        tur_id = int(tur_id)
+    except (TypeError, ValueError):
+        return JsonResponse({'items': []})
+    items = list(Cins.objects.filter(tur_id=tur_id).order_by('ad').values('id', 'ad'))
+    return JsonResponse({'items': items})
+
+
+def districts_for_province(request):
+    il_id = request.GET.get('il_id')
+    try:
+        il_id = int(il_id)
+    except (TypeError, ValueError):
+        return JsonResponse({'items': []})
+    items = list(Ilce.objects.filter(il_id=il_id).order_by('ad').values('id', 'ad'))
+    return JsonResponse({'items': items})
 
 
 # --- 4. Adım: Tamam ---

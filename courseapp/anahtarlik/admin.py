@@ -12,6 +12,7 @@ from .models import (
     Sahip, EvcilHayvan, Etiket, Alerji, SaglikKaydi, AsiTakvimi,
     IlacKaydi, AmeliyatKaydi, BeslenmeKaydi, KiloKaydi
 )
+from .dictionaries import Tur, Cins, Il, Ilce
 
 from veteriner.models import Veteriner
 from petshop.models import Petshop
@@ -211,6 +212,33 @@ class KiloKaydiInline(admin.TabularInline):
     model = KiloKaydi
     extra = 1
     fields = ('kilo', 'tarih', 'notlar')
+
+
+# ---------- Sözlükler: Tür, Cins, İl, İlçe ----------
+@admin.register(Tur)
+class TurAdmin(admin.ModelAdmin):
+    search_fields = ("ad",)
+    list_display = ("ad",)
+
+
+@admin.register(Cins)
+class CinsAdmin(admin.ModelAdmin):
+    list_display = ("ad", "tur")
+    list_filter = ("tur",)
+    search_fields = ("ad", "tur__ad")
+
+
+@admin.register(Il)
+class IlAdmin(admin.ModelAdmin):
+    search_fields = ("ad",)
+    list_display = ("ad",)
+
+
+@admin.register(Ilce)
+class IlceAdmin(admin.ModelAdmin):
+    list_display = ("ad", "il")
+    list_filter = ("il",)
+    search_fields = ("ad", "il__ad")
 
 
 # ---------- Sahip ----------
