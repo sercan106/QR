@@ -1,4 +1,4 @@
-<!-- templates/ana.html -->
+﻿<!-- templates/ana.html -->
 {% load static %}
 <!DOCTYPE html>
 <html lang="tr">
@@ -521,6 +521,12 @@
             animation: float 6s ease-in-out infinite;
         }
     </style>
+    <style>
+        /* Profile menu enhancements */
+        .profile-toggle:hover .rounded-circle { box-shadow: 0 0 0 3px rgba(255,255,255,0.15); transform: scale(1.02); }
+        .profile-menu .menu-heading { text-transform: uppercase; letter-spacing: .04em; }
+        .profile-menu .dropdown-item { display: flex; align-items: center; gap: .25rem; }
+    </style>
     {% block css_dosyalar %}{% endblock %}
 </head>
 <body>
@@ -539,22 +545,49 @@
                     <li class="nav-item"><a class="ust-menu-baglantisi nav-link" href="{% url 'shop_home' %}">Mağaza</a></li>
                     <li class="nav-item"><a class="ust-menu-baglantisi nav-link" href="#iletisim">İletişim</a></li>
                     {% if user.is_authenticated %}
-                    <li class="nav-item"><a class="ust-menu-baglantisi nav-link" href="{% url 'kullanici_paneli' %}">Kullanıcı Paneli</a></li>
+                        {% if user.veteriner_profili or user.petshop_profili %}
+                        <li class="nav-item"><a class="ust-menu-baglantisi nav-link" href="{% url 'kullanici_paneli' %}">KullanÄ±cÄ± Paneli</a></li>
+                        {% endif %}
                     {% endif %}
                 </ul>
                 <div class="d-flex align-items-center flex-column flex-lg-row mt-3 mt-lg-0">
+                    {# Owner (Sahip) icin profil dropdown - sadece SAHIP icin goster #}
+                    {% if user.is_authenticated and not user.veteriner_profili and not user.petshop_profili %}
+                    <div class="dropdown me-lg-2 mb-2 mb-lg-0">
+                        <button class="btn btn-link profile-toggle dropdown-toggle d-flex align-items-center p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="text-decoration: none;">
+                            <span class="rounded-circle overflow-hidden d-inline-flex align-items-center justify-content-center me-2" style="width:40px;height:40px;background: rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);">
+                                {% if user.sahip and user.sahip.profil_fotografi %}
+                                    <img src="{{ user.sahip.profil_fotografi.url }}" alt="Profil" style="width:100%;height:100%;object-fit:cover;">
+                                {% else %}
+                                    <i class="fas fa-user text-white"></i>
+                                {% endif %}
+                            </span>
+                            <span class="text-white">{{ user.username }}</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end profile-menu">
+                            <li><a class="dropdown-item" href="{% url 'profil_duzenle' %}"><i class="fas fa-id-badge me-2"></i>Profilim</a></li>
+                            <li><a class="dropdown-item" href="{% url 'kullanici_paneli' %}"><i class="fas fa-paw me-2"></i>Evcil Hayvanlarım</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-qrcode me-2"></i>Künyelerim</a></li>
+                            <li><a class="dropdown-item" href="{% url 'order_history' %}"><i class="fas fa-box me-2"></i>Siparişlerim</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-crown me-2"></i>Aboneliğim (Pro)</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-bell me-2"></i>Bildirimler</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-sliders-h me-2"></i>Ayarlar</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-life-ring me-2"></i>Yardım Merkezi</a></li>
+                        </ul>
+                    </div>
+                    {% endif %}
                     {% if user.is_authenticated %}
-                    <a href="{% url 'user_logout' %}" class="giris-dugme btn me-lg-2 mb-2 mb-lg-0">
-                        <i class="fas fa-sign-out-alt me-2"></i>Çıkış Yap
-                    </a>
+                        {% if user.veteriner_profili or user.petshop_profili %}
+                        <a href="{% url 'user_logout' %}" class="giris-dugme btn me-lg-2 mb-2 mb-lg-0">
+                            <i class="fas fa-sign-out-alt me-2"></i>Çıkış Yap
+                        </a>
+                        {% endif %}
                     {% else %}
                     <div class="dropdown me-lg-2 mb-2 mb-lg-0">
-                        <button class="giris-dugme btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-user me-2"></i>Giriş / Kayıt
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="{% url 'user_login' %}"><i class="fas fa-sign-in-alt me-2"></i>Giriş Yap</a></li>
-                            <li><a class="dropdown-item" href="{% url 'user_register' %}"><i class="fas fa-user-plus me-2"></i>Kayıt Ol</a></li>
+                            <li><a class="dropdown-item" href="{% url 'user_register' %}"><i class="fas fa-user-plus me-2"></i>Kayııt Ol</a></li>
                         </ul>
                     </div>
                     {% endif %}
@@ -568,7 +601,7 @@
             </div>
         </div>
     </nav>
-
+    
     <div class="offcanvas offcanvas-end yan-menu" tabindex="-1" id="sepetYanMenu">
         <div class="offcanvas-header yan-menu-baslik">
             <h5 class="offcanvas-title"><i class="fas fa-shopping-cart me-2"></i>Sepetim</h5>
@@ -635,63 +668,64 @@
 
     <main>{% block content %}{% endblock %}</main>
 
-    <footer class="alt-kisim">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-4 mb-4 mb-lg-0">
-                    <h5 class="mb-3 d-flex align-items-center">
-                        <i class="fas fa-paw me-2 text-info"></i> 
-                        PetSafe Hub
-                    </h5>
-                    <div class="footer-about">
-                        <p>Evcil dostlarınız için en iyi hizmet ve ürünleri sunuyoruz. Onların mutluluğu bizim önceliğimiz.</p>
-                    </div>
-                    <div class="sosyal-simgeler d-flex mt-3">
-                        <a href="#"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                    </div>
+<footer class="alt-kisim">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-4 mb-4 mb-lg-0">
+                <h5 class="mb-3 d-flex align-items-center">
+                    <i class="fas fa-paw me-2 text-info"></i> 
+                    PetSafe Hub
+                </h5>
+                <div class="footer-about">
+                    <p>Evcil dostlarınız için en iyi hizmet ve ürünleri sunuyoruz. Onların mutluluğu bizim önceliğimiz.</p>
                 </div>
-                <div class="col-lg-2 col-md-6 mb-4 mb-md-0">
-                    <h5 class="mb-3">Hızlı Linkler</h5>
-                    <ul class="footer-links">
-                        <li><a href="{% url 'ev' %}">Ana Sayfa</a></li>
-                        <li><a href="#hizmetler">Hizmetler</a></li>
-                        <li><a href="{% url 'shop_home' %}">Mağaza</a></li>
-                        <li><a href="#iletisim">İletişim</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
-                    <h5 class="mb-3">Hizmetlerimiz</h5>
-                    <ul class="footer-links">
-                        <li><a href="#">Veteriner Randevu</a></li>
-                        <li><a href="#">Pet Kuaför</a></li>
-                        <li><a href="#">Pet Otel</a></li>
-                        <li><a href="#">Eğitim Hizmetleri</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-3 col-md-6">
-                    <h5 class="mb-3">İletişim Bilgileri</h5>
-                    <ul class="footer-links">
-                        <li><i class="fas fa-map-marker-alt me-2 text-info"></i> 1234 Pet Caddesi, İstanbul</li>
-                        <li><i class="fas fa-phone me-2 text-info"></i> (0212) 123 45 67</li>
-                        <li><i class="fas fa-envelope me-2 text-info"></i> info@petsafehub.com</li>
-                        <li><i class="fas fa-clock me-2 text-info"></i> 7/24 Hizmet</li>
-                    </ul>
+                <div class="sosyal-simgeler d-flex mt-3">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
                 </div>
             </div>
-            <hr class="mt-4 mb-3" style="border-color: rgba(255,255,255,0.1);">
-            <div class="row align-items-center">
-                <div class="col-md-6 text-center text-md-start">
-                    <p class="mb-0 opacity-75">© 2025 PetSafe Hub. Tüm hakları saklıdır.</p>
-                </div>
-                <div class="col-md-6 text-center text-md-end">
-                    <p class="mb-0 opacity-75">Made with <i class="fas fa-heart text-danger"></i> for pets</p>
-                </div>
+            <div class="col-lg-2 col-md-6 mb-4 mb-md-0">
+                <h5 class="mb-3">Hızlı Linkler</h5>
+                <ul class="footer-links">
+                    <li><a href="{% url 'ev' %}">Ana Sayfa</a></li>
+                    <li><a href="#hizmetler">Hizmetler</a></li>
+                    <li><a href="{% url 'shop_home' %}">Mağaza</a></li>
+                    <li><a href="#iletisim">İletişim</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
+                <h5 class="mb-3">Hizmetlerimiz</h5>
+                <ul class="footer-links">
+                    <li><a href="#">Veteriner Randevu</a></li>
+                    <li><a href="#">Pet Kuaför</a></li>
+                    <li><a href="#">Pet Otel</a></li>
+                    <li><a href="#">Eğitim Hizmetleri</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <h5 class="mb-3">İletişim Bilgileri</h5>
+                <ul class="footer-links">
+                    <li><i class="fas fa-map-marker-alt me-2 text-info"></i> 1234 Pet Caddesi, İstanbul</li>
+                    <li><i class="fas fa-phone me-2 text-info"></i> (0212) 123 45 67</li>
+                    <li><i class="fas fa-envelope me-2 text-info"></i> info@petsafehub.com</li>
+                    <li><i class="fas fa-clock me-2 text-info"></i> 7/24 Hizmet</li>
+                </ul>
             </div>
         </div>
-    </footer>
+        <hr class="mt-4 mb-3" style="border-color: rgba(255,255,255,0.1);">
+        <div class="row align-items-center">
+            <div class="col-md-6 text-center text-md-start">
+                <p class="mb-0 opacity-75">© 2025 PetSafe Hub. Tüm hakları saklıdır.</p>
+            </div>
+            <div class="col-md-6 text-center text-md-end">
+                <p class="mb-0 opacity-75">Made with <i class="fas fa-heart text-danger"></i> for pets</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
@@ -771,7 +805,7 @@
     </script>
     
     <script>
-        // Kullanıcı Paneli menüsü rol bazlı hedefe yönlendirilsin
+        // KullanÄ±cÄ± Paneli menÃ¼sÃ¼ rol bazlÄ± hedefe yÃ¶nlendirilsin
         document.addEventListener('DOMContentLoaded', function() {
             try {
                 var link = document.querySelector('a[href*="kullanici_paneli"]');
@@ -799,7 +833,7 @@
         {% endfor %}
     </div>
     <script>
-        // Toast mesajlarını otomatik kapatma
+        // Toast mesajlarÄ±nÄ± otomatik kapatma
         document.addEventListener('DOMContentLoaded', function() {
             var toastElList = [].slice.call(document.querySelectorAll('.toast'));
             var toastList = toastElList.map(function(toastEl) {
